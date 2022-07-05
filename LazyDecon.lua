@@ -16,8 +16,15 @@ local function LZD_ShouldDeconEquipment(link)
     local isSet, setName, _, _, _, setId = GetItemLinkSetInfo(link, false)
     local researchable = CanItemLinkBeTraitResearched(link)
     local quality = GetItemLinkQuality(link)
+    local crafted = IsItemLinkCrafted(link)
+    local traitInfo = GetItemTraitInformationFromItemLink(link)
 
-    return not isSet and not researchable and
+    local ornate = traitInfo == ITEM_TRAIT_INFORMATION_ORNATE
+    local intricate = traitInfo == ITEM_TRAIT_INFORMATION_INTRICATE
+
+    return not isSet and
+           not researchable and
+           not crafted and
            quality ~= ITEM_FUNCTIONAL_QUALITY_LEGENDARY
 end
 
@@ -32,6 +39,10 @@ local function LZD_ShouldDeconGlyphs(link)
 end
 
 local function LZD_ShouldDecon(link)
+    if IsItemLinkCrafted(link) then
+        return false
+    end
+
     if GetItemLinkEquipType(link) ~= EQUIP_TYPE_INVALID then
         return LZD_ShouldDeconEquipment(link)
     else
