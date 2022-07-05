@@ -9,6 +9,32 @@ local LZD = {
 -- Settings UI Panel
 -----------------------------------------------------------------------------
 
+local function LZD_CreateSettingsPanel()
+    local panelData = {
+        type = "panel",
+        name = "Lazy Deconstructor",
+        displayName = "Lazy Deconstructor",
+        author = "StorybookTerror",
+        version = LZD.version,
+        registerForDefaults = true,
+        website = "http://github.com/storybookterror/lazydecon"
+    }
+    LAM2:RegisterAddonPanel(LZD.name, panelData)
+
+    local options = {
+        {
+            type = "header",
+            name = "Equipment",
+        },
+        {
+            type = "header",
+            name = "Glyphs",
+        },
+    }
+
+    LAM2:RegisterOptionControls(LZD.name, options)
+end
+
 -----------------------------------------------------------------------------
 -- What to Deconstruct
 -----------------------------------------------------------------------------
@@ -97,6 +123,7 @@ local function LZD_Initialize()
     LZD_RegisterHooks(UNIVERSAL_DECONSTRUCTION.deconstructionPanel.inventory)
     LZD_RegisterHooks(SMITHING.deconstructionPanel.inventory)
     EVENT_MANAGER:RegisterForEvent(LZD.name, EVENT_CRAFTING_STATION_INTERACT, LZD_SwitchDeconScreen)
+    LZD_CreateSettingsPanel()
 end
 
 -----------------------------------------------------------------------------
