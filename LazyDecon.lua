@@ -88,7 +88,8 @@ end
 -----------------------------------------------------------------------------
 local function LZD_RegisterHooks(inventory)
     SecurePostHook(inventory, "AddItemData", LZD_SelectItem)
-    SecurePostHook(inventory, "EnumerateInventorySlotsAndAddToScrollData", LZD_FixSound)
+    --SecurePostHook(inventory, "EnumerateInventorySlotsAndAddToScrollData", LZD_FixSound)
+    SecurePostHook(inventory, "GetIndividualInventorySlotsAndAddToScrollData", LZD_FixSound)
 end
 
 local function LZD_Initialize()
