@@ -3,9 +3,9 @@
 ## Author: |cf7a009StorybookTerror|r
 ## Version: 0.1
 ## APIVersion: 101034
-## SavedVariables: LazyDecon
+## SavedVariables: LazyDeconVars
 ## DependsOn: LibAddonMenu-2.0
-## OptionalDependsOn: LibSlashCommander
+## OptionalDependsOn:
 ##
 ## This Add-on is not created by, affiliated with or sponsored by ZeniMax Media
 ## Inc. or its affiliates. The Elder Scrolls® and related logos are registered
