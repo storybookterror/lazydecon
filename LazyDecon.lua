@@ -26,7 +26,9 @@ local LZD = {
 -----------------------------------------------------------------------------
 
 local function LZD_IsTradeSkillFullyLevelled(tradeskill)
-    local lastRankXP, nextRankXP, curXP = GetSkillLineXPInfo(SKILL_TYPE_TRADESKILL, tradeskill + 1)
+    local skillData = SKILLS_DATA_MANAGER:GetCraftingSkillLineData(tradeskill)
+    local _, skillLineIndex = skillData:GetIndices()
+    local lastRankXP, nextRankXP, curXP = GetSkillLineXPInfo(SKILL_TYPE_TRADESKILL, skillLineIndex)
     return nextRankXP == curXP
 end
 
