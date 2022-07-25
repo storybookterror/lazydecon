@@ -388,6 +388,13 @@ local function LZD_ShouldDeconGlyphs(link)
            LZD_ShouldDeconCraft(LZD.vars.glyphs.when, CRAFTING_TYPE_ENCHANTING)
 end
 
+local function LZD_IsGlyph(link)
+    local itemType = GetItemLinkItemType(link)
+    return itemType == ITEMTYPE_GLYPH_ARMOR or
+           itemType == ITEMTYPE_GLYPH_JEWELRY or
+           itemType == ITEMTYPE_GLYPH_WEAPON
+end
+
 local function LZD_ShouldDecon(bagId, slotIndex)
     if IsItemBoPAndTradeable(bagId, slotIndex) and GetGroupSize() > 0 then
         return false
@@ -426,7 +433,7 @@ local function LZD_ShouldDecon(bagId, slotIndex)
         return LZD_ShouldDeconEquipment(link, "jewelry")
     elseif equipType ~= EQUIP_TYPE_INVALID then
         return LZD_ShouldDeconEquipment(link, "equip")
-    else
+    elseif LZD_IsGlyph(link) then
         return LZD_ShouldDeconGlyphs(link)
     end
 end
@@ -445,12 +452,18 @@ local function LZD_SelectItem(self, bagId, slotIndex, ...)
         -- multiple times.  Disable the sound temporarily (after the first
         -- one) and re-enable it after we finish enumerating items.
         SOUNDS.SMITHING_ITEM_TO_EXTRACT_PLACED = SOUNDS.NONE
+        SOUNDS.ENCHANTING_ARMOR_GLYPH_PLACED = SOUNDS.NONE
+        SOUNDS.ENCHANTING_WEAPON_GLYPH_PLACED = SOUNDS.NONE
+        SOUNDS.ENCHANTING_JEWELRY_GLYPH_PLACED = SOUNDS.NONE
     end
 end
 
 local function LZD_FixSound(...)
-    -- Restore the original sound effect once now that we're done iterating
-    SOUNDS.SMITHING_ITEM_TO_EXTRACT_PLACED = LZD.savedSound
+    -- Restore the original sound effects once now that we're done iterating
+    SOUNDS.SMITHING_ITEM_TO_EXTRACT_PLACED = LZD.savedSmithingSound
+    SOUNDS.ENCHANTING_ARMOR_GLYPH_PLACED = LZD.savedArmorGlyphSound
+    SOUNDS.ENCHANTING_WEAPON_GLYPH_PLACED = LZD.savedWeaponGlyphSound
+    SOUNDS.ENCHANTING_JEWELRY_GLYPH_PLACED = LZD.savedJewelryGlyphSound
 end
 
 -----------------------------------------------------------------------------
@@ -459,6 +472,8 @@ end
 local function LZD_SwitchDeconScreen(eventCode, craftingType, sameStation, craftingMode)
     if ZO_Smithing_IsUniversalDeconstructionCraftingMode(craftingMode) then
         LZD.station = UNIVERSAL_DECONSTRUCTION
+    elseif craftingType == CRAFTING_TYPE_ENCHANTING then
+        LZD.station = ENCHANTING
     else
         LZD.station = SMITHING
     end
@@ -469,16 +484,20 @@ end
 -----------------------------------------------------------------------------
 local function LZD_RegisterHooks(inventory)
     SecurePostHook(inventory, "AddItemData", LZD_SelectItem)
-    --SecurePostHook(inventory, "EnumerateInventorySlotsAndAddToScrollData", LZD_FixSound)
+    SecurePostHook(inventory, "EnumerateInventorySlotsAndAddToScrollData", LZD_FixSound)
     SecurePostHook(inventory, "GetIndividualInventorySlotsAndAddToScrollData", LZD_FixSound)
 end
 
 local function LZD_Initialize()
     LZD.vars = ZO_SavedVars:NewAccountWide("LazyDeconVars", 2, GetWorldName(), LZD.defaults)
 
-    LZD.savedSound = SOUNDS.SMITHING_ITEM_TO_EXTRACT_PLACED
+    LZD.savedSmithingSound = SOUNDS.SMITHING_ITEM_TO_EXTRACT_PLACED
+    LZD.savedArmorGlyphSound = SOUNDS.ENCHANTING_ARMOR_GLYPH_PLACED
+    LZD.savedWeaponGlyphSound = SOUNDS.ENCHANTING_WEAPON_GLYPH_PLACED
+    LZD.savedJewelryGlyphSound = SOUNDS.ENCHANTING_JEWELRY_GLYPH_PLACED
     LZD_RegisterHooks(UNIVERSAL_DECONSTRUCTION.deconstructionPanel.inventory)
     LZD_RegisterHooks(SMITHING.deconstructionPanel.inventory)
+    LZD_RegisterHooks(ENCHANTING.inventory)
     EVENT_MANAGER:RegisterForEvent(LZD.name, EVENT_CRAFTING_STATION_INTERACT, LZD_SwitchDeconScreen)
     LZD_CreateSettingsPanel()
 end
