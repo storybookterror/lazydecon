@@ -145,7 +145,7 @@ local function LZD_ShouldDeconEquipment(link)
     return not isSet and
            not crafted and
            (not researchable or LZD.vars.equip.researchable) and
-           (not ornate or LZD.vars.equip.ornate) and
+           (not ornate or LZD.vars.equip.ornates) and
            LZD_ShouldDeconIntricate(intricate, craft) and
            quality <= LZD.vars.equip.quality
 end
