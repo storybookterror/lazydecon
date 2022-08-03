@@ -1,8 +1,8 @@
 local LAM2 = LibAddonMenu2
 
-LZD_INTRICATES_ALWAYS    = 1
-LZD_INTRICATES_NEVER     = 2
-LZD_INTRICATES_LEVELLING = 3
+LZD_ALWAYS    = 1
+LZD_NEVER     = 2
+LZD_LEVELLING = 3
 
 local LZD = {
     name = "LazyDecon",
@@ -13,7 +13,7 @@ local LZD = {
             quality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
             researchable = false,
             ornates = false,
-            intricates = LZD_INTRICATES_ALWAYS,
+            intricates = LZD_ALWAYS,
         },
         glyphs = {
             quality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
@@ -58,9 +58,9 @@ local function LZD_CreateSettingsPanel()
     end
 
     local intricatesOptions = {}
-    intricatesOptions[LZD_INTRICATES_ALWAYS] = GetString(SI_YES)
-    intricatesOptions[LZD_INTRICATES_NEVER] = GetString(SI_NO)
-    intricatesOptions[LZD_INTRICATES_LEVELLING] = "Only if Levelling"
+    intricatesOptions[LZD_ALWAYS] = GetString(SI_YES)
+    intricatesOptions[LZD_NEVER] = GetString(SI_NO)
+    intricatesOptions[LZD_LEVELLING] = "Only if Levelling"
 
     local options = {
         {
@@ -124,10 +124,9 @@ end
 -----------------------------------------------------------------------------
 -- What to Deconstruct
 -----------------------------------------------------------------------------
-local function LZD_ShouldDeconIntricate(intricate, tradeskill)
-    return not intricate or
-           LZD.vars.equip.intricates == LZD_INTRICATES_ALWAYS or
-           (LZD.vars.equip.intricates == LZD_INTRICATES_LEVELLING and
+local function LZD_ShouldDecon(tristate, tradeskill)
+    return tristate == LZD_ALWAYS or
+           (tristate == LZD_LEVELLING and
             not LZD_IsTradeSkillFullyLevelled(tradeskill))
 end
 
@@ -146,7 +145,7 @@ local function LZD_ShouldDeconEquipment(link)
            not crafted and
            (not researchable or LZD.vars.equip.researchable) and
            (not ornate or LZD.vars.equip.ornates) and
-           LZD_ShouldDeconIntricate(intricate, craft) and
+           (not intricate or LZD_ShouldDecon(LZD.vars.equip.intricates, craft)) and
            quality <= LZD.vars.equip.quality
 end
 
