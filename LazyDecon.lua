@@ -13,8 +13,18 @@ local LZD = {
             minQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             maxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
             researchable = false,
-            ornates = false,
-            intricates = LZD_ALWAYS,
+        },
+        intricates = {
+            [CRAFTING_TYPE_BLACKSMITHING] = LZD_ALWAYS,
+            [CRAFTING_TYPE_CLOTHIER] = LZD_ALWAYS,
+            [CRAFTING_TYPE_WOODWORKING] = LZD_ALWAYS,
+            [CRAFTING_TYPE_JEWELRYCRAFTING] = LZD_ALWAYS,
+        },
+        ornates = {
+            [CRAFTING_TYPE_BLACKSMITHING] = LZD_NEVER,
+            [CRAFTING_TYPE_CLOTHIER] = LZD_NEVER,
+            [CRAFTING_TYPE_WOODWORKING] = LZD_NEVER,
+            [CRAFTING_TYPE_JEWELRYCRAFTING] = LZD_NEVER,
         },
         glyphs = {
             when = LZD_ALWAYS,
@@ -113,14 +123,22 @@ local function LZD_CreateSettingsPanel()
             setFunc = function(value) LZD.vars.equip.researchable = value end,
         },
         {
-            type = "checkbox",
-            name = "Ornates",
-            width = "full",
-            default = LZD.defaults.equip.ornates,
-            getFunc = function() return LZD.vars.equip.ornates end,
-            setFunc = function(value) LZD.vars.equip.ornates = value end,
+            type = "header",
+            name = "Intricates",
         },
-        whenToDeconMenu("Intricates", "equip", "intricates"),
+        whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_BLACKSMITHING), "intricates", CRAFTING_TYPE_BLACKSMITHING),
+        whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_CLOTHIER), "intricates", CRAFTING_TYPE_CLOTHIER),
+        whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_WOODWORKING), "intricates", CRAFTING_TYPE_WOODWORKING),
+        whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_JEWELRYCRAFTING), "intricates", CRAFTING_TYPE_JEWELRYCRAFTING),
+
+        {
+            type = "header",
+            name = "Ornates",
+        },
+        whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_BLACKSMITHING), "ornates", CRAFTING_TYPE_BLACKSMITHING),
+        whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_CLOTHIER), "ornates", CRAFTING_TYPE_CLOTHIER),
+        whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_WOODWORKING), "ornates", CRAFTING_TYPE_WOODWORKING),
+        whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_JEWELRYCRAFTING), "ornates", CRAFTING_TYPE_JEWELRYCRAFTING),
     }
 
     LAM2:RegisterOptionControls(LZD.name, options)
@@ -140,8 +158,9 @@ local function LZD_ShouldDeconEquipment(link)
     local researchable = CanItemLinkBeTraitResearched(link)
     local quality = GetItemLinkQuality(link)
     local crafted = IsItemLinkCrafted(link)
-    local traitInfo = GetItemTraitInformationFromItemLink(link)
     local craft = GetItemLinkCraftingSkillType(link)
+    local traitInfo = GetItemTraitInformationFromItemLink(link)
+    local traitType = GetItemLinkTraitType(link)
 
     local ornate = traitInfo == ITEM_TRAIT_INFORMATION_ORNATE
     local intricate = traitInfo == ITEM_TRAIT_INFORMATION_INTRICATE
@@ -149,8 +168,8 @@ local function LZD_ShouldDeconEquipment(link)
     return not isSet and
            not crafted and
            (not researchable or LZD.vars.equip.researchable) and
-           (not ornate or LZD.vars.equip.ornates) and
-           (not intricate or LZD_ShouldDecon(LZD.vars.equip.intricates, craft)) and
+           (not ornate or LZD_ShouldDecon(LZD.vars.ornates[craft], craft)) and
+           (not intricate or LZD_ShouldDecon(LZD.vars.intricates[craft], craft)) and
            quality >= LZD.vars.equip.minQuality and
            quality <= LZD.vars.equip.maxQuality
 end
