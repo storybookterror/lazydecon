@@ -10,7 +10,8 @@ local LZD = {
 
     defaults = {
         equip = {
-            quality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
+            minQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
+            maxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
             researchable = false,
             ornates = false,
             intricates = LZD_ALWAYS,
@@ -101,7 +102,8 @@ local function LZD_CreateSettingsPanel()
             type = "header",
             name = "Equipment",
         },
-        qualityMenu("Quality (at or below)", "equip", "quality"),
+        qualityMenu("Minimum Quality", "equip", "minQuality"),
+        qualityMenu("Maximum Quality", "equip", "maxQuality"),
         {
             type = "checkbox",
             name = "Researchable",
@@ -149,7 +151,8 @@ local function LZD_ShouldDeconEquipment(link)
            (not researchable or LZD.vars.equip.researchable) and
            (not ornate or LZD.vars.equip.ornates) and
            (not intricate or LZD_ShouldDecon(LZD.vars.equip.intricates, craft)) and
-           quality <= LZD.vars.equip.quality
+           quality >= LZD.vars.equip.minQuality and
+           quality <= LZD.vars.equip.maxQuality
 end
 
 local function LZD_ShouldDeconGlyphs(link)
