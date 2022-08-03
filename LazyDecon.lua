@@ -16,6 +16,7 @@ local LZD = {
             intricates = LZD_ALWAYS,
         },
         glyphs = {
+            when = LZD_ALWAYS,
             minQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             maxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
         },
@@ -92,6 +93,7 @@ local function LZD_CreateSettingsPanel()
             type = "header",
             name = "Glyphs",
         },
+        whenToDeconMenu("Deconstruct?", "glyphs", "when"),
         qualityMenu("Minimum Quality", "glyphs", "minQuality"),
         qualityMenu("Maximum Quality", "glyphs", "maxQuality"),
 
@@ -154,7 +156,8 @@ local function LZD_ShouldDeconGlyphs(link)
     local quality = GetItemLinkQuality(link)
 
     return quality >= LZD.vars.glyphs.minQuality and
-           quality <= LZD.vars.glyphs.maxQuality
+           quality <= LZD.vars.glyphs.maxQuality and
+           LZD_ShouldDecon(LZD.vars.glyphs.when, CRAFTING_TYPE_ENCHANTING)
 end
 
 local function LZD_ShouldDecon(link)
