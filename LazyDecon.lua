@@ -156,19 +156,23 @@ local function LZD_ShouldDeconEquipment(link)
     local isSet, setName, _, _, _, setId = GetItemLinkSetInfo(link, false)
     local researchable = CanItemLinkBeTraitResearched(link)
     local quality = GetItemLinkQuality(link)
-    local crafted = IsItemLinkCrafted(link)
     local craft = GetItemLinkCraftingSkillType(link)
     local traitInfo = GetItemTraitInformationFromItemLink(link)
     local traitType = GetItemLinkTraitType(link)
 
-    local ornate = traitInfo == ITEM_TRAIT_INFORMATION_ORNATE
-    local intricate = traitInfo == ITEM_TRAIT_INFORMATION_INTRICATE
+    if traitInfo == ITEM_TRAIT_INFORMATION_INTRICATE then
+       return LZD_ShouldDecon(LZD.vars.intricates[craft], craft)
+    end
+
+    if traitInfo == ITEM_TRAIT_INFORMATION_ORNATE then
+       return LZD_ShouldDecon(LZD.vars.ornates[craft], craft)
+    end
+
+    if researchable and not LZD.vars.equip.researchable then
+        return false
+    end
 
     return not isSet and
-           not crafted and
-           (not researchable or LZD.vars.equip.researchable) and
-           (not ornate or LZD_ShouldDecon(LZD.vars.ornates[craft], craft)) and
-           (not intricate or LZD_ShouldDecon(LZD.vars.intricates[craft], craft)) and
            quality >= LZD.vars.equip.minQuality and
            quality <= LZD.vars.equip.maxQuality
 end
