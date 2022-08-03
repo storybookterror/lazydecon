@@ -16,7 +16,8 @@ local LZD = {
             intricates = LZD_ALWAYS,
         },
         glyphs = {
-            quality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
+            minQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
+            maxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
         },
     },
 }
@@ -77,6 +78,13 @@ local function LZD_CreateSettingsPanel()
     local options = {
         {
             type = "header",
+            name = "Glyphs",
+        },
+        qualityMenu("Minimum Quality", "glyphs", "minQuality"),
+        qualityMenu("Maximum Quality", "glyphs", "maxQuality"),
+
+        {
+            type = "header",
             name = "Equipment",
         },
         qualityMenu("Quality (at or below)", "equip", "quality"),
@@ -106,12 +114,6 @@ local function LZD_CreateSettingsPanel()
             getFunc = function() return intricatesOptions[LZD.vars.equip.intricates] end,
             setFunc = function(value) for i, s in ipairs(intricatesOptions) do if value == s then LZD.vars.equip.intricates = i break end end end,
         },
-
-        {
-            type = "header",
-            name = "Glyphs",
-        },
-        qualityMenu("Quality (at or below)", "glyphs", "quality"),
     }
 
     LAM2:RegisterOptionControls(LZD.name, options)
@@ -148,7 +150,8 @@ end
 local function LZD_ShouldDeconGlyphs(link)
     local quality = GetItemLinkQuality(link)
 
-    return quality <= LZD.vars.glyphs.quality
+    return quality >= LZD.vars.glyphs.minQuality and
+           quality <= LZD.vars.glyphs.maxQuality
 end
 
 local function LZD_ShouldDecon(link)
