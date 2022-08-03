@@ -62,20 +62,24 @@ local function LZD_CreateSettingsPanel()
     intricatesOptions[LZD_NEVER] = GetString(SI_NO)
     intricatesOptions[LZD_LEVELLING] = "Only if Levelling"
 
+    local function qualityMenu(name, category, option)
+        return {
+            type = "dropdown",
+            name = name,
+            width = "full",
+            choices = qualityNames,
+            default = qualityNames[LZD.defaults[category][option]],
+            getFunc = function() return qualityNames[LZD.vars[category][option]] end,
+            setFunc = function(value) LZD.vars[category][option] = qualityEnums[value] end,
+        }
+    end
+
     local options = {
         {
             type = "header",
             name = "Equipment",
         },
-        {
-            type = "dropdown",
-            name = "Quality (at or below)",
-            width = "full",
-            choices = qualityNames,
-            default = qualityNames[LZD.defaults.equip.quality],
-            getFunc = function() return qualityNames[LZD.vars.equip.quality] end,
-            setFunc = function(value) LZD.vars.equip.quality = qualityEnums[value] end,
-        },
+        qualityMenu("Quality (at or below)", "equip", "quality"),
         {
             type = "checkbox",
             name = "Researchable",
@@ -107,15 +111,7 @@ local function LZD_CreateSettingsPanel()
             type = "header",
             name = "Glyphs",
         },
-        {
-            type = "dropdown",
-            name = "Quality (at or below)",
-            width = "full",
-            choices = qualityNames,
-            default = qualityNames[LZD.defaults.glyphs.quality],
-            getFunc = function() return qualityNames[LZD.vars.glyphs.quality] end,
-            setFunc = function(value) LZD.vars.glyphs.quality = qualityEnums[value] end,
-        },
+        qualityMenu("Quality (at or below)", "glyphs", "quality"),
     }
 
     LAM2:RegisterOptionControls(LZD.name, options)
