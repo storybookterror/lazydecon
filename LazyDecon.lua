@@ -58,11 +58,6 @@ local function LZD_CreateSettingsPanel()
         qualityEnums[name] = i
     end
 
-    local intricatesOptions = {}
-    intricatesOptions[LZD_ALWAYS] = GetString(SI_YES)
-    intricatesOptions[LZD_NEVER] = GetString(SI_NO)
-    intricatesOptions[LZD_LEVELLING] = "Only if Levelling"
-
     local function qualityMenu(name, category, option)
         return {
             type = "dropdown",
@@ -72,6 +67,23 @@ local function LZD_CreateSettingsPanel()
             default = qualityNames[LZD.defaults[category][option]],
             getFunc = function() return qualityNames[LZD.vars[category][option]] end,
             setFunc = function(value) LZD.vars[category][option] = qualityEnums[value] end,
+        }
+    end
+
+    local whenToDeconOptions = {}
+    whenToDeconOptions[LZD_ALWAYS] = GetString(SI_YES)
+    whenToDeconOptions[LZD_NEVER] = GetString(SI_NO)
+    whenToDeconOptions[LZD_LEVELLING] = "Only if Levelling"
+
+    local function whenToDeconMenu(name, category, option)
+        return {
+            type = "dropdown",
+            name = name,
+            width = "full",
+            choices = whenToDeconOptions,
+            default = LZD.defaults[category][option],
+            getFunc = function() return whenToDeconOptions[LZD.vars[category][option]] end,
+            setFunc = function(value) for i, s in ipairs(whenToDeconOptions) do if value == s then LZD.vars[category][option] = i break end end end,
         }
     end
 
@@ -104,16 +116,7 @@ local function LZD_CreateSettingsPanel()
             getFunc = function() return LZD.vars.equip.ornates end,
             setFunc = function(value) LZD.vars.equip.ornates = value end,
         },
-        {
-            type = "dropdown",
-            name = "Intricates",
-            tooltip = "",
-            width = "full",
-            choices = intricatesOptions,
-            default = LZD.defaults.equip.intricates,
-            getFunc = function() return intricatesOptions[LZD.vars.equip.intricates] end,
-            setFunc = function(value) for i, s in ipairs(intricatesOptions) do if value == s then LZD.vars.equip.intricates = i break end end end,
-        },
+        whenToDeconMenu("Intricates", "equip", "intricates"),
     }
 
     LAM2:RegisterOptionControls(LZD.name, options)
