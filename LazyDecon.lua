@@ -74,7 +74,6 @@ local function LZD_CreateSettingsPanel()
         return {
             type = "dropdown",
             name = name,
-            width = "full",
             choices = qualityNames,
             default = qualityNames[LZD.defaults[category][option]],
             getFunc = function() return qualityNames[LZD.vars[category][option]] end,
@@ -91,11 +90,19 @@ local function LZD_CreateSettingsPanel()
         return {
             type = "dropdown",
             name = name,
-            width = "full",
             choices = whenToDeconOptions,
             default = LZD.defaults[category][option],
             getFunc = function() return whenToDeconOptions[LZD.vars[category][option]] end,
             setFunc = function(value) for i, s in ipairs(whenToDeconOptions) do if value == s then LZD.vars[category][option] = i break end end end,
+        }
+    end
+
+    local function craftSubMenu(category)
+        return {
+            whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_BLACKSMITHING), category, CRAFTING_TYPE_BLACKSMITHING),
+            whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_CLOTHIER), category, CRAFTING_TYPE_CLOTHIER),
+            whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_WOODWORKING), category, CRAFTING_TYPE_WOODWORKING),
+            whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_JEWELRYCRAFTING), category, CRAFTING_TYPE_JEWELRYCRAFTING),
         }
     end
 
@@ -117,28 +124,20 @@ local function LZD_CreateSettingsPanel()
         {
             type = "checkbox",
             name = "Researchable",
-            width = "full",
             default = LZD.defaults.equip.researchable,
             getFunc = function() return LZD.vars.equip.researchable end,
             setFunc = function(value) LZD.vars.equip.researchable = value end,
         },
         {
-            type = "header",
+            type = "submenu",
             name = "Intricates",
+            controls = craftSubMenu("intricates"),
         },
-        whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_BLACKSMITHING), "intricates", CRAFTING_TYPE_BLACKSMITHING),
-        whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_CLOTHIER), "intricates", CRAFTING_TYPE_CLOTHIER),
-        whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_WOODWORKING), "intricates", CRAFTING_TYPE_WOODWORKING),
-        whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_JEWELRYCRAFTING), "intricates", CRAFTING_TYPE_JEWELRYCRAFTING),
-
         {
-            type = "header",
+            type = "submenu",
             name = "Ornates",
+            controls = craftSubMenu("ornates"),
         },
-        whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_BLACKSMITHING), "ornates", CRAFTING_TYPE_BLACKSMITHING),
-        whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_CLOTHIER), "ornates", CRAFTING_TYPE_CLOTHIER),
-        whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_WOODWORKING), "ornates", CRAFTING_TYPE_WOODWORKING),
-        whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_JEWELRYCRAFTING), "ornates", CRAFTING_TYPE_JEWELRYCRAFTING),
     }
 
     LAM2:RegisterOptionControls(LZD.name, options)
