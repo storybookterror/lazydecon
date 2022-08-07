@@ -20,7 +20,7 @@ local LZD = {
             trashMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
             researchable = false,
             intricates = LZD_LEVELLING,
-            ornates = LZD_NEVER,
+            ornates = false,
             sets = false,
             setMinQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             setMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARCANE,
@@ -51,7 +51,7 @@ local LZD = {
             trashMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
             researchable = false,
             intricates = LZD_LEVELLING,
-            ornates = LZD_NEVER,
+            ornates = false,
             sets = false,
             setMinQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             setMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARCANE,
@@ -182,7 +182,7 @@ local function LZD_CreateSettingsPanel()
         qualityMenu("Basic Items: Maximum Quality", "equip", "trashMaxQuality"),
         checkbox("Include Researchable Items", "equip", "researchable", nil),
         whenToDeconMenu("Include Intricates", "equip", "intricates"),
-        whenToDeconMenu("Include Ornates", "equip", "ornates"),
+        checkbox("Include Ornates", "equip", "ornates", nil),
         checkbox("Include Easily Reconstructed Sets", "equip", "sets",
                  "Set items with a reconstruction cost of 50 transmutation crystals or less will be marked for deconstruction."),
         qualityMenu("Set Items: Minimum Quality", "equip", "setMinQuality"),
@@ -230,7 +230,7 @@ local function LZD_CreateSettingsPanel()
         qualityMenu("Basic Items: Maximum Quality", "jewelry", "trashMaxQuality"),
         checkbox("Include Researchable Items", "jewelry", "researchable", nil),
         whenToDeconMenu("Include Intricates", "jewelry", "intricates"),
-        whenToDeconMenu("Include Ornates", "jewelry", "ornates"),
+        checkbox("Include Ornates", "jewelry", "ornates", nil),
         checkbox("Include Easily Reconstructed Sets", "jewelry", "sets",
                  "Set items with a reconstruction cost of 50 transmutation crystals or less will be marked for deconstruction."),
         qualityMenu("Set Items: Minimum Quality", "jewelry", "setMinQuality"),
@@ -286,8 +286,9 @@ local function LZD_ShouldDeconEquipment(link, category)
        return LZD_ShouldDeconCraft(LZD.vars[category].intricates, craft)
     end
 
-    if traitInfo == ITEM_TRAIT_INFORMATION_ORNATE then
-       return LZD_ShouldDeconCraft(LZD.vars[category].ornates, craft)
+    if traitInfo == ITEM_TRAIT_INFORMATION_ORNATE and not
+       LZD.vars[category].ornates then
+       return false
     end
 
     if researchable and not LZD.vars[category].researchable then
