@@ -11,11 +11,13 @@ local LZD = {
     defaults = {
         glyphs = {
             when = LZD_ALWAYS,
+            extraction = 0,
             minQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             maxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
         },
         equip = {
             when = LZD_ALWAYS,
+            extraction = 0,
             trashMinQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             trashMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
             researchable = false,
@@ -47,6 +49,7 @@ local LZD = {
         },
         jewelry = {
             when = LZD_ALWAYS,
+            extraction = 3,
             trashMinQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             trashMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
             researchable = false,
@@ -79,6 +82,22 @@ local function LZD_IsTradeSkillFullyLevelled(tradeskill)
     local _, skillLineIndex = skillData:GetIndices()
     local lastRankXP, nextRankXP, curXP = GetSkillLineXPInfo(SKILL_TYPE_TRADESKILL, skillLineIndex)
     return nextRankXP == curXP
+end
+
+local function LZD_ExtractionPassiveRank(tradeskill)
+    local passiveIndex = {
+        [CRAFTING_TYPE_BLACKSMITHING] = 4, -- Metal Extraction
+        [CRAFTING_TYPE_CLOTHIER] = 4, -- Unraveling
+        [CRAFTING_TYPE_WOODWORKING] = 4, -- Wood Extraction
+        [CRAFTING_TYPE_ENCHANTING] = 5, -- Runestone Extraction
+        [CRAFTING_TYPE_JEWELRYCRAFTING] = 3, -- Jewelry Extraction
+    }
+    local skillLine = SKILLS_DATA_MANAGER:GetCraftingSkillLineData(tradeskill)
+    local skillData = skillLine:GetSkillDataByIndex(passiveIndex[tradeskill])
+    -- Can print skillData:GetRankData(1).name to verify indices
+    assert(skillData:IsPassive())
+    assert(skillData.numRanks == 3)
+    return skillData:GetNumPointsAllocated()
 end
 
 -----------------------------------------------------------------------------
@@ -117,15 +136,16 @@ local function LZD_CreateSettingsPanel()
         }
     end
 
-    local function dropdown(name, choices, category, option, tooltip)
+    local function dropdown(name, choices, category, option, bias, tooltip)
+        bias = bias or 0
         return {
             type = "dropdown",
             name = name,
             tooltip = tooltip,
             choices = choices,
             default = LZD.defaults[category][option],
-            getFunc = function() return choices[LZD.vars[category][option]] end,
-            setFunc = function(value) for i, s in ipairs(choices) do if value == s then LZD.vars[category][option] = i break end end end,
+            getFunc = function() return choices[LZD.vars[category][option] + bias] end,
+            setFunc = function(value) for i, s in ipairs(choices) do if value == s then LZD.vars[category][option] = i - bias break end end end,
         }
     end
 
@@ -135,7 +155,14 @@ local function LZD_CreateSettingsPanel()
             [LZD_NEVER]     = GetString(SI_NO),
             [LZD_LEVELLING] = "Only if Levelling",
         }
-        return dropdown(name, choices, category, option, nil)
+        return dropdown(name, choices, category, option)
+    end
+
+    local function rankMenu(category, option)
+        local choices = { "Any", "At least rank 1", "At least rank 2", "Max" }
+        return dropdown("Only with Extraction Passive Rank", choices,
+                        category, option, 1,
+                        "Intricates used when levelling ignore this setting.")
     end
 
     local function checkbox(name, category, option, tooltip)
@@ -175,6 +202,7 @@ local function LZD_CreateSettingsPanel()
             name = "Glyphs",
         },
         whenToDeconMenu("Include Glyphs", "glyphs", "when"),
+        rankMenu("glyphs", "extraction"),
         qualityMenu("Minimum Quality", "glyphs", "minQuality"),
         qualityMenu("Maximum Quality", "glyphs", "maxQuality"),
 
@@ -183,6 +211,7 @@ local function LZD_CreateSettingsPanel()
             name = "Weapons & Armor",
         },
         whenToDeconMenu("Include Weapons and Armor", "equip", "when"),
+        rankMenu("equip", "extraction"),
         qualityMenu("Basic Items: Minimum Quality", "equip", "trashMinQuality"),
         qualityMenu("Basic Items: Maximum Quality", "equip", "trashMaxQuality"),
         checkbox("Include Researchable Items", "equip", "researchable", nil),
@@ -231,6 +260,7 @@ local function LZD_CreateSettingsPanel()
             name = "Jewelry",
         },
         whenToDeconMenu("Include Jewelry", "jewelry", "when"),
+        rankMenu("jewelry", "extraction"),
         qualityMenu("Basic Jewelry: Minimum Quality", "jewelry", "trashMinQuality"),
         qualityMenu("Basic Jewelry: Maximum Quality", "jewelry", "trashMaxQuality"),
         checkbox("Include Researchable Items", "jewelry", "researchable", nil),
@@ -284,6 +314,13 @@ local function LZD_ShouldDeconEquipment(link, category)
     local traitType = GetItemLinkTraitType(link)
 
     if not LZD_ShouldDeconCraft(LZD.vars[category].when, craft) then
+        return false
+    end
+
+    if LZD_ExtractionPassiveRank(craft) < LZD.vars[category].extraction and
+       not (traitInfo == ITEM_TRAIT_INFORMATION_INTRICATE and
+            LZD.vars[category].intricates == LZD_LEVELLING) then
+        -- We skip the extraction skill check when levelling with intricates
         return false
     end
 
