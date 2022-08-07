@@ -247,7 +247,7 @@ end
 -----------------------------------------------------------------------------
 -- What to Deconstruct
 -----------------------------------------------------------------------------
-local function LZD_ShouldDecon(tristate, tradeskill)
+local function LZD_ShouldDeconCraft(tristate, tradeskill)
     return tristate == LZD_ALWAYS or
            (tristate == LZD_LEVELLING and
             not LZD_IsTradeSkillFullyLevelled(tradeskill))
@@ -261,16 +261,16 @@ local function LZD_ShouldDeconEquipment(link)
     local traitInfo = GetItemTraitInformationFromItemLink(link)
     local traitType = GetItemLinkTraitType(link)
 
-    if not LZD_ShouldDecon(LZD.vars.equip.when, craft) then
+    if not LZD_ShouldDeconCraft(LZD.vars.equip.when, craft) then
         return false
     end
 
     if traitInfo == ITEM_TRAIT_INFORMATION_INTRICATE then
-       return LZD_ShouldDecon(LZD.vars.intricates[craft], craft)
+       return LZD_ShouldDeconCraft(LZD.vars.intricates[craft], craft)
     end
 
     if traitInfo == ITEM_TRAIT_INFORMATION_ORNATE then
-       return LZD_ShouldDecon(LZD.vars.ornates[craft], craft)
+       return LZD_ShouldDeconCraft(LZD.vars.ornates[craft], craft)
     end
 
     if researchable and not LZD.vars.equip.researchable then
@@ -294,7 +294,7 @@ local function LZD_ShouldDeconGlyphs(link)
 
     return quality >= LZD.vars.glyphs.minQuality and
            quality <= LZD.vars.glyphs.maxQuality and
-           LZD_ShouldDecon(LZD.vars.glyphs.when, CRAFTING_TYPE_ENCHANTING)
+           LZD_ShouldDeconCraft(LZD.vars.glyphs.when, CRAFTING_TYPE_ENCHANTING)
 end
 
 local function LZD_ShouldDecon(link)
