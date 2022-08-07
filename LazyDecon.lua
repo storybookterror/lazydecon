@@ -320,6 +320,11 @@ local function LZD_ShouldDecon(link)
         return false
     end
 
+    -- Exclude unique items like "Grievous Leeching Ward"
+    if IsItemLinkUnique(link) then
+        return false
+    end
+
     local equipType = GetItemLinkEquipType(link)
 
     if equipType == EQUIP_TYPE_RING or equipType == EQUIP_TYPE_NECK then
