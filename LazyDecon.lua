@@ -9,11 +9,18 @@ local LZD = {
     version = "0.1",
 
     defaults = {
+        glyphs = {
+            when = LZD_ALWAYS,
+            minQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
+            maxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
+        },
         equip = {
             when = LZD_ALWAYS,
             trashMinQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             trashMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
             researchable = false,
+            intricates = LZD_LEVELLING,
+            ornates = LZD_NEVER,
             sets = false,
             setMinQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             setMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARCANE,
@@ -27,15 +34,6 @@ local LZD = {
                 [ITEM_TRAIT_TYPE_ARMOR_PROSPEROUS] = true, -- Invigorating
                 [ITEM_TRAIT_TYPE_ARMOR_DIVINES] = false,
                 [ITEM_TRAIT_TYPE_ARMOR_NIRNHONED] = false,
-                [ITEM_TRAIT_TYPE_JEWELRY_ARCANE] = true,
-                [ITEM_TRAIT_TYPE_JEWELRY_HEALTHY] = true,
-                [ITEM_TRAIT_TYPE_JEWELRY_ROBUST] = true,
-                [ITEM_TRAIT_TYPE_JEWELRY_TRIUNE] = false,
-                [ITEM_TRAIT_TYPE_JEWELRY_INFUSED] = false,
-                [ITEM_TRAIT_TYPE_JEWELRY_PROTECTIVE] = false,
-                [ITEM_TRAIT_TYPE_JEWELRY_SWIFT] = false,
-                [ITEM_TRAIT_TYPE_JEWELRY_HARMONY] = false,
-                [ITEM_TRAIT_TYPE_JEWELRY_BLOODTHIRSTY] = false,
                 [ITEM_TRAIT_TYPE_WEAPON_POWERED] = false,
                 [ITEM_TRAIT_TYPE_WEAPON_CHARGED] = false,
                 [ITEM_TRAIT_TYPE_WEAPON_PRECISE] = false,
@@ -47,22 +45,27 @@ local LZD = {
                 [ITEM_TRAIT_TYPE_WEAPON_NIRNHONED] = false,
             }
         },
-        intricates = {
-            [CRAFTING_TYPE_BLACKSMITHING] = LZD_ALWAYS,
-            [CRAFTING_TYPE_CLOTHIER] = LZD_ALWAYS,
-            [CRAFTING_TYPE_WOODWORKING] = LZD_ALWAYS,
-            [CRAFTING_TYPE_JEWELRYCRAFTING] = LZD_ALWAYS,
-        },
-        ornates = {
-            [CRAFTING_TYPE_BLACKSMITHING] = LZD_NEVER,
-            [CRAFTING_TYPE_CLOTHIER] = LZD_NEVER,
-            [CRAFTING_TYPE_WOODWORKING] = LZD_NEVER,
-            [CRAFTING_TYPE_JEWELRYCRAFTING] = LZD_NEVER,
-        },
-        glyphs = {
+        jewelry = {
             when = LZD_ALWAYS,
-            minQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
-            maxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
+            trashMinQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
+            trashMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
+            researchable = false,
+            intricates = LZD_LEVELLING,
+            ornates = LZD_NEVER,
+            sets = false,
+            setMinQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
+            setMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARCANE,
+            setTraits = {
+                [ITEM_TRAIT_TYPE_JEWELRY_ARCANE] = true,
+                [ITEM_TRAIT_TYPE_JEWELRY_HEALTHY] = true,
+                [ITEM_TRAIT_TYPE_JEWELRY_ROBUST] = true,
+                [ITEM_TRAIT_TYPE_JEWELRY_TRIUNE] = false,
+                [ITEM_TRAIT_TYPE_JEWELRY_INFUSED] = false,
+                [ITEM_TRAIT_TYPE_JEWELRY_PROTECTIVE] = false,
+                [ITEM_TRAIT_TYPE_JEWELRY_SWIFT] = false,
+                [ITEM_TRAIT_TYPE_JEWELRY_HARMONY] = false,
+                [ITEM_TRAIT_TYPE_JEWELRY_BLOODTHIRSTY] = false,
+            }
         },
     },
 }
@@ -130,6 +133,17 @@ local function LZD_CreateSettingsPanel()
         }
     end
 
+    local function checkbox(name, category, option, tooltip)
+        return {
+            type = "checkbox",
+            name = name,
+            tooltip = tooltip,
+            default = LZD.defaults[category][option],
+            getFunc = function() return LZD.vars[category][option] end,
+            setFunc = function(value) LZD.vars[category][option] = value end,
+        }
+    end
+
     local function craftSubMenu(category)
         return {
             whenToDeconMenu(GetString("SI_TRADESKILLTYPE", CRAFTING_TYPE_BLACKSMITHING), category, CRAFTING_TYPE_BLACKSMITHING),
@@ -139,20 +153,14 @@ local function LZD_CreateSettingsPanel()
         }
     end
 
-    local function traitOption(trait)
-        local category = GetItemTraitTypeCategory(trait)
+    local function traitOption(category, trait)
         local name = GetString("SI_ITEMTRAITTYPE", trait)
-        local catnames = {
-            [ITEM_TRAIT_TYPE_CATEGORY_ARMOR] = " Armor",
-            [ITEM_TRAIT_TYPE_CATEGORY_JEWELRY] = " Jewelry",
-            [ITEM_TRAIT_TYPE_CATEGORY_WEAPON] = " Weapons",
-        }
         return {
             type = "checkbox",
-            name = name .. catnames[category],
-            default = LZD.defaults.equip.setTraits[trait],
-            getFunc = function() return LZD.vars.equip.setTraits[trait] end,
-            setFunc = function(value) LZD.vars.equip.setTraits[trait] = value end,
+            name = name,
+            default = LZD.defaults[category].setTraits[trait],
+            getFunc = function() return LZD.vars[category].setTraits[trait] end,
+            setFunc = function(value) LZD.vars[category].setTraits[trait] = value end,
         }
     end
 
@@ -167,26 +175,16 @@ local function LZD_CreateSettingsPanel()
 
         {
             type = "header",
-            name = "Equipment",
+            name = "Weapons & Armor",
         },
-        whenToDeconMenu("Include Equipment", "equip", "when"),
+        whenToDeconMenu("Include Weapons and Armor", "equip", "when"),
         qualityMenu("Basic Items: Minimum Quality", "equip", "trashMinQuality"),
         qualityMenu("Basic Items: Maximum Quality", "equip", "trashMaxQuality"),
-        {
-            type = "checkbox",
-            name = "Include Researchable Items",
-            default = LZD.defaults.equip.researchable,
-            getFunc = function() return LZD.vars.equip.researchable end,
-            setFunc = function(value) LZD.vars.equip.researchable = value end,
-        },
-        {
-            type = "checkbox",
-            name = "Include Easily Reconstructed Sets",
-            tooltip = "Set items with a reconstruction cost of 50 transmutation crystals or less will be marked for deconstruction.",
-            default = LZD.defaults.equip.sets,
-            getFunc = function() return LZD.vars.equip.sets end,
-            setFunc = function(value) LZD.vars.equip.sets = value end,
-        },
+        checkbox("Include Researchable Items", "equip", "researchable", nil),
+        whenToDeconMenu("Include Intricates", "equip", "intricates"),
+        whenToDeconMenu("Include Ornates", "equip", "ornates"),
+        checkbox("Include Easily Reconstructed Sets", "equip", "sets",
+                 "Set items with a reconstruction cost of 50 transmutation crystals or less will be marked for deconstruction."),
         qualityMenu("Set Items: Minimum Quality", "equip", "setMinQuality"),
         qualityMenu("Set Items: Maximum Quality", "equip", "setMaxQuality"),
         {
@@ -197,47 +195,66 @@ local function LZD_CreateSettingsPanel()
             {
                 {
                     type = "description",
-                    text = "Only include set items with these traits:",
+                    text = "Only include set armor with these traits:",
                 },
-                traitOption(ITEM_TRAIT_TYPE_ARMOR_STURDY),
-                traitOption(ITEM_TRAIT_TYPE_ARMOR_IMPENETRABLE),
-                traitOption(ITEM_TRAIT_TYPE_ARMOR_REINFORCED),
-                traitOption(ITEM_TRAIT_TYPE_ARMOR_WELL_FITTED),
-                traitOption(ITEM_TRAIT_TYPE_ARMOR_TRAINING),
-                traitOption(ITEM_TRAIT_TYPE_ARMOR_INFUSED),
-                traitOption(ITEM_TRAIT_TYPE_ARMOR_PROSPEROUS),
-                traitOption(ITEM_TRAIT_TYPE_ARMOR_DIVINES),
-                traitOption(ITEM_TRAIT_TYPE_ARMOR_NIRNHONED),
-                traitOption(ITEM_TRAIT_TYPE_JEWELRY_ARCANE),
-                traitOption(ITEM_TRAIT_TYPE_JEWELRY_HEALTHY),
-                traitOption(ITEM_TRAIT_TYPE_JEWELRY_ROBUST),
-                traitOption(ITEM_TRAIT_TYPE_JEWELRY_TRIUNE),
-                traitOption(ITEM_TRAIT_TYPE_JEWELRY_INFUSED),
-                traitOption(ITEM_TRAIT_TYPE_JEWELRY_PROTECTIVE),
-                traitOption(ITEM_TRAIT_TYPE_JEWELRY_SWIFT),
-                traitOption(ITEM_TRAIT_TYPE_JEWELRY_HARMONY),
-                traitOption(ITEM_TRAIT_TYPE_JEWELRY_BLOODTHIRSTY),
-                traitOption(ITEM_TRAIT_TYPE_WEAPON_POWERED),
-                traitOption(ITEM_TRAIT_TYPE_WEAPON_CHARGED),
-                traitOption(ITEM_TRAIT_TYPE_WEAPON_PRECISE),
-                traitOption(ITEM_TRAIT_TYPE_WEAPON_INFUSED),
-                traitOption(ITEM_TRAIT_TYPE_WEAPON_DEFENDING),
-                traitOption(ITEM_TRAIT_TYPE_WEAPON_TRAINING),
-                traitOption(ITEM_TRAIT_TYPE_WEAPON_SHARPENED),
-                traitOption(ITEM_TRAIT_TYPE_WEAPON_DECISIVE),
-                traitOption(ITEM_TRAIT_TYPE_WEAPON_NIRNHONED),
+                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_STURDY),
+                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_IMPENETRABLE),
+                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_REINFORCED),
+                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_WELL_FITTED),
+                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_TRAINING),
+                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_INFUSED),
+                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_PROSPEROUS),
+                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_DIVINES),
+                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_NIRNHONED),
+                {
+                    type = "description",
+                    text = "Only include set weapons with these traits:",
+                },
+                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_POWERED),
+                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_CHARGED),
+                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_PRECISE),
+                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_INFUSED),
+                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_DEFENDING),
+                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_TRAINING),
+                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_SHARPENED),
+                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_DECISIVE),
+                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_NIRNHONED),
             }
         },
-
         {
-            type = "submenu",
-            name = "Intricates",
-            controls = craftSubMenu("intricates"),
+            type = "header",
+            name = "Jewelry",
         },
+        whenToDeconMenu("Include Jewelry", "jewelry", "when"),
+        qualityMenu("Basic Items: Minimum Quality", "jewelry", "trashMinQuality"),
+        qualityMenu("Basic Items: Maximum Quality", "jewelry", "trashMaxQuality"),
+        checkbox("Include Researchable Items", "jewelry", "researchable", nil),
+        whenToDeconMenu("Include Intricates", "jewelry", "intricates"),
+        whenToDeconMenu("Include Ornates", "jewelry", "ornates"),
+        checkbox("Include Easily Reconstructed Sets", "jewelry", "sets",
+                 "Set items with a reconstruction cost of 50 transmutation crystals or less will be marked for deconstruction."),
+        qualityMenu("Set Items: Minimum Quality", "jewelry", "setMinQuality"),
+        qualityMenu("Set Items: Maximum Quality", "jewelry", "setMaxQuality"),
         {
             type = "submenu",
-            name = "Ornates",
-            controls = craftSubMenu("ornates"),
+
+            name = "Set Traits",
+            controls =
+            {
+                {
+                    type = "description",
+                    text = "Only include set jewelry with these traits:",
+                },
+                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_ARCANE),
+                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_HEALTHY),
+                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_ROBUST),
+                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_TRIUNE),
+                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_INFUSED),
+                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_PROTECTIVE),
+                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_SWIFT),
+                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_HARMONY),
+                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_BLOODTHIRSTY),
+            }
         },
     }
 
@@ -253,7 +270,7 @@ local function LZD_ShouldDeconCraft(tristate, tradeskill)
             not LZD_IsTradeSkillFullyLevelled(tradeskill))
 end
 
-local function LZD_ShouldDeconEquipment(link)
+local function LZD_ShouldDeconEquipment(link, category)
     local isSet, setName, _, _, _, setId = GetItemLinkSetInfo(link, false)
     local researchable = CanItemLinkBeTraitResearched(link)
     local quality = GetItemLinkQuality(link)
@@ -261,31 +278,31 @@ local function LZD_ShouldDeconEquipment(link)
     local traitInfo = GetItemTraitInformationFromItemLink(link)
     local traitType = GetItemLinkTraitType(link)
 
-    if not LZD_ShouldDeconCraft(LZD.vars.equip.when, craft) then
+    if not LZD_ShouldDeconCraft(LZD.vars[category].when, craft) then
         return false
     end
 
     if traitInfo == ITEM_TRAIT_INFORMATION_INTRICATE then
-       return LZD_ShouldDeconCraft(LZD.vars.intricates[craft], craft)
+       return LZD_ShouldDeconCraft(LZD.vars[category].intricates, craft)
     end
 
     if traitInfo == ITEM_TRAIT_INFORMATION_ORNATE then
-       return LZD_ShouldDeconCraft(LZD.vars.ornates[craft], craft)
+       return LZD_ShouldDeconCraft(LZD.vars[category].ornates, craft)
     end
 
-    if researchable and not LZD.vars.equip.researchable then
+    if researchable and not LZD.vars[category].researchable then
         return false
     end
 
     if not isSet then
-        return quality >= LZD.vars.equip.trashMinQuality and
-               quality <= LZD.vars.equip.trashMaxQuality
+        return quality >= LZD.vars[category].trashMinQuality and
+               quality <= LZD.vars[category].trashMaxQuality
     end
 
-    return LZD.vars.equip.sets and
-           LZD.vars.equip.setTraits[traitType] and
-           quality >= LZD.vars.equip.setMinQuality and
-           quality <= LZD.vars.equip.setMaxQuality and
+    return LZD.vars[category].sets and
+           LZD.vars[category].setTraits[traitType] and
+           quality >= LZD.vars[category].setMinQuality and
+           quality <= LZD.vars[category].setMaxQuality and
            GetItemReconstructionCurrencyOptionCost(setId, CURT_CHAOTIC_CREATIA) <= 50
 end
 
@@ -302,8 +319,12 @@ local function LZD_ShouldDecon(link)
         return false
     end
 
-    if GetItemLinkEquipType(link) ~= EQUIP_TYPE_INVALID then
-        return LZD_ShouldDeconEquipment(link)
+    local equipType = GetItemLinkEquipType(link)
+
+    if equipType == EQUIP_TYPE_RING or equipType == EQUIP_TYPE_NECK then
+        return LZD_ShouldDeconEquipment(link, "jewelry")
+    elseif equipType ~= EQUIP_TYPE_INVALID then
+        return LZD_ShouldDeconEquipment(link, "equip")
     else
         return LZD_ShouldDeconGlyphs(link)
     end
