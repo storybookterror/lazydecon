@@ -379,7 +379,7 @@ local function LZD_RegisterHooks(inventory)
 end
 
 local function LZD_Initialize()
-    LZD.vars = ZO_SavedVars:NewAccountWide("LazyDeconVars", 1, GetWorldName(), LZD.defaults)
+    LZD.vars = ZO_SavedVars:NewAccountWide("LazyDeconVars", 2, GetWorldName(), LZD.defaults)
 
     LZD.savedSound = SOUNDS.SMITHING_ITEM_TO_EXTRACT_PLACED
     LZD_RegisterHooks(UNIVERSAL_DECONSTRUCTION.deconstructionPanel.inventory)
