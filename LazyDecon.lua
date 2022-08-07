@@ -117,20 +117,25 @@ local function LZD_CreateSettingsPanel()
         }
     end
 
-    local whenToDeconOptions = {}
-    whenToDeconOptions[LZD_ALWAYS] = GetString(SI_YES)
-    whenToDeconOptions[LZD_NEVER] = GetString(SI_NO)
-    whenToDeconOptions[LZD_LEVELLING] = "Only if Levelling"
-
-    local function whenToDeconMenu(name, category, option)
+    local function dropdown(name, choices, category, option, tooltip)
         return {
             type = "dropdown",
             name = name,
-            choices = whenToDeconOptions,
+            tooltip = tooltip,
+            choices = choices,
             default = LZD.defaults[category][option],
-            getFunc = function() return whenToDeconOptions[LZD.vars[category][option]] end,
-            setFunc = function(value) for i, s in ipairs(whenToDeconOptions) do if value == s then LZD.vars[category][option] = i break end end end,
+            getFunc = function() return choices[LZD.vars[category][option]] end,
+            setFunc = function(value) for i, s in ipairs(choices) do if value == s then LZD.vars[category][option] = i break end end end,
         }
+    end
+
+    local function whenToDeconMenu(name, category, option)
+        local choices = {
+            [LZD_ALWAYS]    = GetString(SI_YES),
+            [LZD_NEVER]     = GetString(SI_NO),
+            [LZD_LEVELLING] = "Only if Levelling",
+        }
+        return dropdown(name, choices, category, option, nil)
     end
 
     local function checkbox(name, category, option, tooltip)
