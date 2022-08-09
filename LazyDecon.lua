@@ -357,7 +357,13 @@ local function LZD_ShouldDeconGlyphs(link)
            LZD_ShouldDeconCraft(LZD.vars.glyphs.when, CRAFTING_TYPE_ENCHANTING)
 end
 
-local function LZD_ShouldDecon(link)
+local function LZD_ShouldDecon(bagId, slotIndex)
+    if IsItemBoPAndTradeable(bagId, slotIndex) and GetGroupSize() > 0 then
+        return false
+    end
+
+    local link = GetItemLink(bagId, slotIndex, LINK_STYLE_BRACKETS)
+
     if IsItemLinkCrafted(link) then
         return false
     end
@@ -384,7 +390,7 @@ end
 local function LZD_SelectItem(self, bagId, slotIndex, ...)
     name = GetItemName(bagId, slotIndex)
     link = GetItemLink(bagId, slotIndex, LINK_STYLE_BRACKETS)
-    if LZD_ShouldDecon(link) then
+    if LZD_ShouldDecon(bagId, slotIndex) then
         LZD.station:AddItemToCraft(bagId, slotIndex)
         d("LazyDecon added " .. link)
 
