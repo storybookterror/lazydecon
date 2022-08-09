@@ -388,8 +388,8 @@ end
 -- Deconstruction Panel Hooks
 -----------------------------------------------------------------------------
 local function LZD_SelectItem(self, bagId, slotIndex, ...)
-    name = GetItemName(bagId, slotIndex)
-    link = GetItemLink(bagId, slotIndex, LINK_STYLE_BRACKETS)
+    local name = GetItemName(bagId, slotIndex)
+    local link = GetItemLink(bagId, slotIndex, LINK_STYLE_BRACKETS)
     if LZD_ShouldDecon(bagId, slotIndex) then
         LZD.station:AddItemToCraft(bagId, slotIndex)
         d("LazyDecon added " .. link)
