@@ -397,6 +397,10 @@ local function LZD_ShouldDecon(bagId, slotIndex)
         return false
     end
 
+    if IsItemPlayerLocked(bagId, slotIndex) then
+        return false
+    end
+
     local link = GetItemLink(bagId, slotIndex, LINK_STYLE_BRACKETS)
 
     if IsItemLinkCrafted(link) then
