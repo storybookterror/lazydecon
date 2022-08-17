@@ -9,6 +9,9 @@ local LZD = {
     version = "0.1",
 
     defaults = {
+        general = {
+            price = 1000,
+        },
         glyphs = {
             when = LZD_ALWAYS,
             extraction = 0,
@@ -196,7 +199,35 @@ local function LZD_CreateSettingsPanel()
         }
     end
 
+    local function priceMenu()
+        if LibPrice then
+            return {
+                type = "slider",
+                name = "Exclude if price is at least...",
+                tooltip = "This uses LibPrice to estimate the value of the item, which sources data from Master Merchant, Arkadius' Trade Tools, Tamriel Trade Centre, and more.",
+                min = 50,
+                max = 5000,
+                step = 50,
+                clampInput = false,
+                default = LZD.defaults.general.price,
+                getFunc = function() return LZD.vars.general.price end,
+                setFunc = function(value) LZD.vars.general.price = math.max(0, value) end,
+            }
+        else
+            return {
+                type = "description",
+                text = "(Install LibPrice to support price-based exclusions.)",
+                tooltip = "Lazy Deconstructor can exclude items based on the estimated value of the items if you install LibPrice and trading add-ons.",
+            }
+        end
+    end
+
     local options = {
+        {
+            type = "header",
+            name = "General",
+        },
+        priceMenu(),
         {
             type = "header",
             name = "Glyphs",
@@ -375,6 +406,14 @@ local function LZD_ShouldDecon(bagId, slotIndex)
     -- Exclude unique items like "Grievous Leeching Ward"
     if IsItemLinkUnique(link) then
         return false
+    end
+
+    if LibPrice then
+       local price = LibPrice.ItemLinkToPriceGold(link)
+       -- d("LazyDecon estimated " .. link .. " to be worth " .. tostring(price) .. " gold")
+       if price and price >= LZD.vars.general.price then
+           return false
+       end
     end
 
     local equipType = GetItemLinkEquipType(link)

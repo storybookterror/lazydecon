@@ -5,7 +5,7 @@
 ## APIVersion: 101034
 ## SavedVariables: LazyDeconVars
 ## DependsOn: LibAddonMenu-2.0
-## OptionalDependsOn:
+## OptionalDependsOn: LibPrice
 ##
 ## This Add-on is not created by, affiliated with or sponsored by ZeniMax Media
 ## Inc. or its affiliates. The Elder Scrolls® and related logos are registered
