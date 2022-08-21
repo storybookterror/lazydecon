@@ -10,7 +10,6 @@ local LZD = {
 
     defaults = {
         general = {
-            price = 1000,
         },
         glyphs = {
             when = LZD_ALWAYS,
@@ -21,6 +20,7 @@ local LZD = {
         equip = {
             when = LZD_ALWAYS,
             extraction = 0,
+            price = 1000,
             trashMinQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             trashMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
             researchable = false,
@@ -53,6 +53,7 @@ local LZD = {
         jewelry = {
             when = LZD_ALWAYS,
             extraction = 3,
+            price = 2500,
             trashMinQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             trashMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
             researchable = false,
@@ -199,7 +200,7 @@ local function LZD_CreateSettingsPanel()
         }
     end
 
-    local function priceMenu()
+    local function priceMenu(category)
         if LibPrice then
             return {
                 type = "slider",
@@ -209,9 +210,9 @@ local function LZD_CreateSettingsPanel()
                 max = 5000,
                 step = 50,
                 clampInput = false,
-                default = LZD.defaults.general.price,
-                getFunc = function() return LZD.vars.general.price end,
-                setFunc = function(value) LZD.vars.general.price = math.max(0, value) end,
+                default = LZD.defaults[category].price,
+                getFunc = function() return LZD.vars[category].price end,
+                setFunc = function(value) LZD.vars[category].price = math.max(0, value) end,
             }
         else
             return {
@@ -223,11 +224,6 @@ local function LZD_CreateSettingsPanel()
     end
 
     local options = {
-        {
-            type = "header",
-            name = "General",
-        },
-        priceMenu(),
         {
             type = "header",
             name = "Glyphs",
@@ -243,6 +239,7 @@ local function LZD_CreateSettingsPanel()
         },
         whenToDeconMenu("Include Weapons and Armor", "equip", "when"),
         rankMenu("equip", "extraction"),
+        priceMenu("equip"),
         qualityMenu("Basic Items: Minimum Quality", "equip", "trashMinQuality"),
         qualityMenu("Basic Items: Maximum Quality", "equip", "trashMaxQuality"),
         checkbox("Include Researchable Items", "equip", "researchable", nil),
@@ -292,6 +289,7 @@ local function LZD_CreateSettingsPanel()
         },
         whenToDeconMenu("Include Jewelry", "jewelry", "when"),
         rankMenu("jewelry", "extraction"),
+        priceMenu("jewelry"),
         qualityMenu("Basic Jewelry: Minimum Quality", "jewelry", "trashMinQuality"),
         qualityMenu("Basic Jewelry: Maximum Quality", "jewelry", "trashMaxQuality"),
         checkbox("Include Researchable Items", "jewelry", "researchable", nil),
@@ -346,6 +344,14 @@ local function LZD_ShouldDeconEquipment(link, category)
 
     if not LZD_ShouldDeconCraft(LZD.vars[category].when, craft) then
         return false
+    end
+
+    if LibPrice then
+       local price = LibPrice.ItemLinkToPriceGold(link)
+       -- d("LazyDecon estimated " .. link .. " to be worth " .. tostring(price) .. " gold")
+       if price and price >= LZD.vars[category].price then
+           return false
+       end
     end
 
     if LZD_ExtractionPassiveRank(craft) < LZD.vars[category].extraction and
@@ -417,14 +423,6 @@ local function LZD_ShouldDecon(bagId, slotIndex)
     -- Exclude unique items like "Grievous Leeching Ward"
     if IsItemLinkUnique(link) then
         return false
-    end
-
-    if LibPrice then
-       local price = LibPrice.ItemLinkToPriceGold(link)
-       -- d("LazyDecon estimated " .. link .. " to be worth " .. tostring(price) .. " gold")
-       if price and price >= LZD.vars.general.price then
-           return false
-       end
     end
 
     local equipType = GetItemLinkEquipType(link)
