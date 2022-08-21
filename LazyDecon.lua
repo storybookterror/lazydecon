@@ -30,25 +30,51 @@ local LZD = {
             setMinQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             setMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
             setTraits = {
-                [ITEM_TRAIT_TYPE_ARMOR_STURDY] = false,
-                [ITEM_TRAIT_TYPE_ARMOR_IMPENETRABLE] = true,
-                [ITEM_TRAIT_TYPE_ARMOR_REINFORCED] = true,
-                [ITEM_TRAIT_TYPE_ARMOR_WELL_FITTED] = true,
-                [ITEM_TRAIT_TYPE_ARMOR_TRAINING] = true,
-                [ITEM_TRAIT_TYPE_ARMOR_INFUSED] = false,
-                [ITEM_TRAIT_TYPE_ARMOR_PROSPEROUS] = true, -- Invigorating
-                [ITEM_TRAIT_TYPE_ARMOR_DIVINES] = false,
-                [ITEM_TRAIT_TYPE_ARMOR_NIRNHONED] = false,
-                [ITEM_TRAIT_TYPE_WEAPON_POWERED] = false,
-                [ITEM_TRAIT_TYPE_WEAPON_CHARGED] = false,
-                [ITEM_TRAIT_TYPE_WEAPON_PRECISE] = false,
-                [ITEM_TRAIT_TYPE_WEAPON_INFUSED] = false,
-                [ITEM_TRAIT_TYPE_WEAPON_DEFENDING] = true,
-                [ITEM_TRAIT_TYPE_WEAPON_TRAINING] = true,
-                [ITEM_TRAIT_TYPE_WEAPON_SHARPENED] = true,
-                [ITEM_TRAIT_TYPE_WEAPON_DECISIVE] = true,
-                [ITEM_TRAIT_TYPE_WEAPON_NIRNHONED] = false,
-            }
+                [ARMORTYPE_HEAVY] = {
+                    [ITEM_TRAIT_TYPE_ARMOR_STURDY] = false,
+                    [ITEM_TRAIT_TYPE_ARMOR_IMPENETRABLE] = false,
+                    [ITEM_TRAIT_TYPE_ARMOR_REINFORCED] = false,
+                    [ITEM_TRAIT_TYPE_ARMOR_WELL_FITTED] = false,
+                    [ITEM_TRAIT_TYPE_ARMOR_TRAINING] = true,
+                    [ITEM_TRAIT_TYPE_ARMOR_INFUSED] = false,
+                    [ITEM_TRAIT_TYPE_ARMOR_PROSPEROUS] = true, -- Invigorating
+                    [ITEM_TRAIT_TYPE_ARMOR_DIVINES] = false,
+                    [ITEM_TRAIT_TYPE_ARMOR_NIRNHONED] = false,
+                },
+                [ARMORTYPE_MEDIUM] = {
+                    [ITEM_TRAIT_TYPE_ARMOR_STURDY] = true,
+                    [ITEM_TRAIT_TYPE_ARMOR_IMPENETRABLE] = false,
+                    [ITEM_TRAIT_TYPE_ARMOR_REINFORCED] = false,
+                    [ITEM_TRAIT_TYPE_ARMOR_WELL_FITTED] = false,
+                    [ITEM_TRAIT_TYPE_ARMOR_TRAINING] = true,
+                    [ITEM_TRAIT_TYPE_ARMOR_INFUSED] = false,
+                    [ITEM_TRAIT_TYPE_ARMOR_PROSPEROUS] = true, -- Invigorating
+                    [ITEM_TRAIT_TYPE_ARMOR_DIVINES] = false,
+                    [ITEM_TRAIT_TYPE_ARMOR_NIRNHONED] = false,
+                },
+                [ARMORTYPE_LIGHT] = {
+                    [ITEM_TRAIT_TYPE_ARMOR_STURDY] = true,
+                    [ITEM_TRAIT_TYPE_ARMOR_IMPENETRABLE] = false,
+                    [ITEM_TRAIT_TYPE_ARMOR_REINFORCED] = false,
+                    [ITEM_TRAIT_TYPE_ARMOR_WELL_FITTED] = false,
+                    [ITEM_TRAIT_TYPE_ARMOR_TRAINING] = true,
+                    [ITEM_TRAIT_TYPE_ARMOR_INFUSED] = false,
+                    [ITEM_TRAIT_TYPE_ARMOR_PROSPEROUS] = true, -- Invigorating
+                    [ITEM_TRAIT_TYPE_ARMOR_DIVINES] = false,
+                    [ITEM_TRAIT_TYPE_ARMOR_NIRNHONED] = false,
+                },
+                [ARMORTYPE_NONE] = {
+                    [ITEM_TRAIT_TYPE_WEAPON_POWERED] = false,
+                    [ITEM_TRAIT_TYPE_WEAPON_CHARGED] = false,
+                    [ITEM_TRAIT_TYPE_WEAPON_PRECISE] = false,
+                    [ITEM_TRAIT_TYPE_WEAPON_INFUSED] = false,
+                    [ITEM_TRAIT_TYPE_WEAPON_DEFENDING] = true,
+                    [ITEM_TRAIT_TYPE_WEAPON_TRAINING] = true,
+                    [ITEM_TRAIT_TYPE_WEAPON_SHARPENED] = true,
+                    [ITEM_TRAIT_TYPE_WEAPON_DECISIVE] = true,
+                    [ITEM_TRAIT_TYPE_WEAPON_NIRNHONED] = false,
+                },
+            },
         },
         jewelry = {
             when = LZD_ALWAYS,
@@ -63,16 +89,18 @@ local LZD = {
             setMinQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             setMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARCANE,
             setTraits = {
-                [ITEM_TRAIT_TYPE_JEWELRY_ARCANE] = true,
-                [ITEM_TRAIT_TYPE_JEWELRY_HEALTHY] = true,
-                [ITEM_TRAIT_TYPE_JEWELRY_ROBUST] = true,
-                [ITEM_TRAIT_TYPE_JEWELRY_TRIUNE] = false,
-                [ITEM_TRAIT_TYPE_JEWELRY_INFUSED] = false,
-                [ITEM_TRAIT_TYPE_JEWELRY_PROTECTIVE] = false,
-                [ITEM_TRAIT_TYPE_JEWELRY_SWIFT] = false,
-                [ITEM_TRAIT_TYPE_JEWELRY_HARMONY] = false,
-                [ITEM_TRAIT_TYPE_JEWELRY_BLOODTHIRSTY] = false,
-            }
+                [ARMORTYPE_NONE] = {
+                    [ITEM_TRAIT_TYPE_JEWELRY_ARCANE] = true,
+                    [ITEM_TRAIT_TYPE_JEWELRY_HEALTHY] = true,
+                    [ITEM_TRAIT_TYPE_JEWELRY_ROBUST] = true,
+                    [ITEM_TRAIT_TYPE_JEWELRY_TRIUNE] = false,
+                    [ITEM_TRAIT_TYPE_JEWELRY_INFUSED] = false,
+                    [ITEM_TRAIT_TYPE_JEWELRY_PROTECTIVE] = false,
+                    [ITEM_TRAIT_TYPE_JEWELRY_SWIFT] = false,
+                    [ITEM_TRAIT_TYPE_JEWELRY_HARMONY] = false,
+                    [ITEM_TRAIT_TYPE_JEWELRY_BLOODTHIRSTY] = false,
+                },
+            },
         },
     },
 }
@@ -189,14 +217,39 @@ local function LZD_CreateSettingsPanel()
         }
     end
 
-    local function traitOption(category, trait)
+    local function traitOption(category, armorType, trait)
         local name = GetString("SI_ITEMTRAITTYPE", trait)
         return {
             type = "checkbox",
             name = name,
-            default = LZD.defaults[category].setTraits[trait],
-            getFunc = function() return LZD.vars[category].setTraits[trait] end,
-            setFunc = function(value) LZD.vars[category].setTraits[trait] = value end,
+            default = LZD.defaults[category].setTraits[armorType][trait],
+            getFunc = function() return LZD.vars[category].setTraits[armorType][trait] end,
+            setFunc = function(value) LZD.vars[category].setTraits[armorType][trait] = value end,
+        }
+    end
+
+    local function armorTraitOptions(armorType)
+        local armorWeightName = GetString("SI_ARMORTYPE", armorType)
+        return {
+            type = "submenu",
+
+            name = "Set Traits: " .. armorWeightName .. " Armor",
+            controls =
+            {
+                {
+                    type = "description",
+                    text = "Only include " .. armorWeightName .. " set armor with these traits:",
+                },
+                traitOption("equip", armorType, ITEM_TRAIT_TYPE_ARMOR_STURDY),
+                traitOption("equip", armorType, ITEM_TRAIT_TYPE_ARMOR_IMPENETRABLE),
+                traitOption("equip", armorType, ITEM_TRAIT_TYPE_ARMOR_REINFORCED),
+                traitOption("equip", armorType, ITEM_TRAIT_TYPE_ARMOR_WELL_FITTED),
+                traitOption("equip", armorType, ITEM_TRAIT_TYPE_ARMOR_TRAINING),
+                traitOption("equip", armorType, ITEM_TRAIT_TYPE_ARMOR_INFUSED),
+                traitOption("equip", armorType, ITEM_TRAIT_TYPE_ARMOR_PROSPEROUS),
+                traitOption("equip", armorType, ITEM_TRAIT_TYPE_ARMOR_DIVINES),
+                traitOption("equip", armorType, ITEM_TRAIT_TYPE_ARMOR_NIRNHONED),
+            },
         }
     end
 
@@ -249,38 +302,28 @@ local function LZD_CreateSettingsPanel()
                  "Set items with a reconstruction cost of 50 transmutation crystals or less will be marked for deconstruction."),
         qualityMenu("Set Items: Minimum Quality", "equip", "setMinQuality"),
         qualityMenu("Set Items: Maximum Quality", "equip", "setMaxQuality"),
+        armorTraitOptions(ARMORTYPE_HEAVY),
+        armorTraitOptions(ARMORTYPE_MEDIUM),
+        armorTraitOptions(ARMORTYPE_LIGHT),
         {
             type = "submenu",
 
-            name = "Set Traits",
+            name = "Set Traits: Weapons",
             controls =
             {
                 {
                     type = "description",
-                    text = "Only include set armor with these traits:",
-                },
-                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_STURDY),
-                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_IMPENETRABLE),
-                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_REINFORCED),
-                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_WELL_FITTED),
-                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_TRAINING),
-                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_INFUSED),
-                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_PROSPEROUS),
-                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_DIVINES),
-                traitOption("equip", ITEM_TRAIT_TYPE_ARMOR_NIRNHONED),
-                {
-                    type = "description",
                     text = "Only include set weapons with these traits:",
                 },
-                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_POWERED),
-                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_CHARGED),
-                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_PRECISE),
-                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_INFUSED),
-                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_DEFENDING),
-                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_TRAINING),
-                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_SHARPENED),
-                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_DECISIVE),
-                traitOption("equip", ITEM_TRAIT_TYPE_WEAPON_NIRNHONED),
+                traitOption("equip", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_WEAPON_POWERED),
+                traitOption("equip", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_WEAPON_CHARGED),
+                traitOption("equip", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_WEAPON_PRECISE),
+                traitOption("equip", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_WEAPON_INFUSED),
+                traitOption("equip", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_WEAPON_DEFENDING),
+                traitOption("equip", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_WEAPON_TRAINING),
+                traitOption("equip", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_WEAPON_SHARPENED),
+                traitOption("equip", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_WEAPON_DECISIVE),
+                traitOption("equip", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_WEAPON_NIRNHONED),
             }
         },
         {
@@ -302,22 +345,22 @@ local function LZD_CreateSettingsPanel()
         {
             type = "submenu",
 
-            name = "Set Traits",
+            name = "Set Traits: Jewelry",
             controls =
             {
                 {
                     type = "description",
                     text = "Only include set jewelry with these traits:",
                 },
-                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_ARCANE),
-                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_HEALTHY),
-                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_ROBUST),
-                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_TRIUNE),
-                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_INFUSED),
-                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_PROTECTIVE),
-                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_SWIFT),
-                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_HARMONY),
-                traitOption("jewelry", ITEM_TRAIT_TYPE_JEWELRY_BLOODTHIRSTY),
+                traitOption("jewelry", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_JEWELRY_ARCANE),
+                traitOption("jewelry", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_JEWELRY_HEALTHY),
+                traitOption("jewelry", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_JEWELRY_ROBUST),
+                traitOption("jewelry", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_JEWELRY_TRIUNE),
+                traitOption("jewelry", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_JEWELRY_INFUSED),
+                traitOption("jewelry", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_JEWELRY_PROTECTIVE),
+                traitOption("jewelry", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_JEWELRY_SWIFT),
+                traitOption("jewelry", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_JEWELRY_HARMONY),
+                traitOption("jewelry", ARMORTYPE_NONE, ITEM_TRAIT_TYPE_JEWELRY_BLOODTHIRSTY),
             }
         },
     }
@@ -379,8 +422,10 @@ local function LZD_ShouldDeconEquipment(link, category)
                quality <= LZD.vars[category].trashMaxQuality
     end
 
+    local armorType = GetItemLinkArmorType(link)
+
     return LZD.vars[category].sets and
-           LZD.vars[category].setTraits[traitType] and
+           LZD.vars[category].setTraits[armorType][traitType] and
            quality >= LZD.vars[category].setMinQuality and
            quality <= LZD.vars[category].setMaxQuality and
            GetItemReconstructionCurrencyOptionCost(setId, CURT_CHAOTIC_CREATIA) <= 50
