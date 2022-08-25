@@ -451,6 +451,11 @@ local function LZD_ShouldDecon(bagId, slotIndex)
         return false
     end
 
+    -- FCOItemSaver support (thanks to Baertram!)
+    if FCOIS and FCOIS.IsDeconstructionLocked(bagId, slotIndex, nil) then
+        return false
+    end
+
     if IsItemInArmory(bagId, slotIndex) then
         return false
     end
