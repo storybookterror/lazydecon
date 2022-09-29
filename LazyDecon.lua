@@ -422,13 +422,24 @@ local function LZD_ShouldDeconEquipment(link, category)
                quality <= LZD.vars[category].trashMaxQuality
     end
 
+    local reconCost =
+       GetItemReconstructionCurrencyOptionCost(setId, CURT_CHAOTIC_CREATIA)
+
+    -- Exclude craftable set items.  Although we already exclude crafted
+    -- items, there are quest reward items like Spellbreaker's Staff which
+    -- are non-crafted items which are part of a craftable set.  Some of
+    -- those require a lot of trait research to craft, so we skip them.
+    if not reconCost then
+        return false
+    end
+
     local armorType = GetItemLinkArmorType(link)
 
     return LZD.vars[category].sets and
            LZD.vars[category].setTraits[armorType][traitType] and
            quality >= LZD.vars[category].setMinQuality and
            quality <= LZD.vars[category].setMaxQuality and
-           GetItemReconstructionCurrencyOptionCost(setId, CURT_CHAOTIC_CREATIA) <= 50
+           reconCost <= 50
 end
 
 local function LZD_ShouldDeconGlyphs(link)
