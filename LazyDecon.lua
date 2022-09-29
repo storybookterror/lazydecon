@@ -10,6 +10,7 @@ local LZD = {
 
     defaults = {
         general = {
+            spam = true,
         },
         glyphs = {
             when = LZD_ALWAYS,
@@ -277,6 +278,8 @@ local function LZD_CreateSettingsPanel()
     end
 
     local options = {
+        checkbox("Print selected items to Chat", "general", "spam",
+                 "Print \"LazyDecon added [Item]\" in chatbox for each selected item so you can sanity check it.  (Currently may double post, this is a known issue.)"),
         {
             type = "header",
             name = "Glyphs",
@@ -505,7 +508,9 @@ local function LZD_SelectItem(self, bagId, slotIndex, ...)
     local link = GetItemLink(bagId, slotIndex, LINK_STYLE_BRACKETS)
     if LZD_ShouldDecon(bagId, slotIndex) then
         LZD.station:AddItemToCraft(bagId, slotIndex)
-        d("LazyDecon added " .. link)
+        if LZD.vars.general.spam then
+            d("LazyDecon added " .. link)
+        end
 
         -- Adding multiple items would trigger the "select an item" sound
         -- multiple times.  Disable the sound temporarily (after the first
