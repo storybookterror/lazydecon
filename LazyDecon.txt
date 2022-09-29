@@ -1,7 +1,7 @@
 ## Title: |c7635f7Lazy Deconstructor|r
 ## Description: Automatically select items to deconstruct
 ## Author: |cf7a009StorybookTerror|r
-## Version: 0.2
+## Version: 0.3
 ## APIVersion: 101035
 ## SavedVariables: LazyDeconVars
 ## DependsOn: LibAddonMenu-2.0

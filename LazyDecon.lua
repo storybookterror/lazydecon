@@ -6,7 +6,7 @@ LZD_LEVELLING = 3
 
 local LZD = {
     name = "LazyDecon",
-    version = "0.2",
+    version = "0.3",
 
     defaults = {
         general = {
