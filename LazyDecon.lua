@@ -14,6 +14,7 @@ local LZD = {
         },
         glyphs = {
             when = LZD_ALWAYS,
+            crafted = true,
             extraction = 0,
             minQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             maxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
@@ -285,6 +286,8 @@ local function LZD_CreateSettingsPanel()
             name = "Glyphs",
         },
         whenToDeconMenu("Include Glyphs", "glyphs", "when"),
+        checkbox("Crafted For Levelling", "glyphs", "crafted",
+                 "Glyphs crafted by another character will be marked for deconstruction if the current character isn't fully levelled in enchanting."),
         rankMenu("glyphs", "extraction"),
         qualityMenu("Minimum Quality", "glyphs", "minQuality"),
         qualityMenu("Maximum Quality", "glyphs", "maxQuality"),
@@ -395,6 +398,10 @@ local function LZD_ShouldDeconEquipment(link, category)
     local traitInfo = GetItemTraitInformationFromItemLink(link)
     local traitType = GetItemLinkTraitType(link)
 
+    if IsItemLinkCrafted(link) then
+        return false
+    end
+
     if not LZD_ShouldDeconCraft(LZD.vars[category].when, craft) then
         return false
     end
@@ -452,8 +459,36 @@ local function LZD_ShouldDeconEquipment(link, category)
            reconCost <= 50
 end
 
-local function LZD_ShouldDeconGlyphs(link)
+local function LZD_IsSelfCrafted(bagId, slotIndex)
+    return GetItemCreatorName(bagId, slotIndex) == GetUnitName("player")
+end
+
+local function LZD_ShouldDeconGlyphs(bagId, slotIndex, link)
     local quality = GetItemLinkQuality(link)
+
+    if IsItemLinkCrafted(link) then
+        -- Players frequently craft glyphs on one character and share them
+        -- with another character or friend to help level their enchanting.
+        -- So we may want to allow this in some cases.
+        if not LZD.vars.glyphs.crafted then
+            return false
+        end
+
+        -- We don't want to deconstruct any items crafted by the current
+        -- character.  The XP returns for that are poor, and these are
+        -- more likely glyphs meant for actual use, or for writ quests.
+        if LZD_IsSelfCrafted(bagId, slotIndex) then
+            return false
+        end
+
+        -- If we aren't levelling crafting, deconstruction isn't desirable
+        local tradeskill = GetItemLinkCraftingSkillType(link)
+        if LZD_IsTradeSkillFullyLevelled(tradeskill) then
+            return false
+        end
+
+        -- Allow this crafted glyph, assuming it meets the usual conditions
+    end
 
     return quality >= LZD.vars.glyphs.minQuality and
            quality <= LZD.vars.glyphs.maxQuality and
@@ -487,10 +522,6 @@ local function LZD_ShouldDecon(bagId, slotIndex)
 
     local link = GetItemLink(bagId, slotIndex, LINK_STYLE_BRACKETS)
 
-    if IsItemLinkCrafted(link) then
-        return false
-    end
-
     -- Exclude unique items like "Grievous Leeching Ward"
     if IsItemLinkUnique(link) then
         return false
@@ -503,7 +534,7 @@ local function LZD_ShouldDecon(bagId, slotIndex)
     elseif equipType ~= EQUIP_TYPE_INVALID then
         return LZD_ShouldDeconEquipment(link, "equip")
     elseif LZD_IsGlyph(link) then
-        return LZD_ShouldDeconGlyphs(link)
+        return LZD_ShouldDeconGlyphs(bagId, slotIndex, link)
     end
 end
 
