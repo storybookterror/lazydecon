@@ -374,6 +374,13 @@ end
 -----------------------------------------------------------------------------
 -- What to Deconstruct
 -----------------------------------------------------------------------------
+local function LZD_SaveForCrows(link)
+    -- Quest 6024, "Glitter and Gleam", requires you to collect 3 pieces of
+    -- ornate armor for the Bursar of Tributes (Blackfeather Court) in the
+    -- Brass Fortress (Clockwork City).
+    return GetItemLinkArmorType(link) ~= ARMORTYPE_NONE and HasQuest(6024)
+end
+
 local function LZD_ShouldDeconCraft(tristate, tradeskill)
     return tristate == LZD_ALWAYS or
            (tristate == LZD_LEVELLING and
@@ -411,8 +418,8 @@ local function LZD_ShouldDeconEquipment(link, category)
        return LZD_ShouldDeconCraft(LZD.vars[category].intricates, craft)
     end
 
-    if traitInfo == ITEM_TRAIT_INFORMATION_ORNATE and not
-       LZD.vars[category].ornates then
+    if traitInfo == ITEM_TRAIT_INFORMATION_ORNATE and
+       (not LZD.vars[category].ornates or LZD_SaveForCrows(link)) then
        return false
     end
 
