@@ -2,7 +2,7 @@
 ## Description: Automatically select items to deconstruct
 ## Author: |cf7a009StorybookTerror|r
 ## Version: 0.3
-## APIVersion: 101035
+## APIVersion: 101045
 ## SavedVariables: LazyDeconVars
 ## DependsOn: LibAddonMenu-2.0
 ## OptionalDependsOn: LibPrice FCOItemSaver>=235
