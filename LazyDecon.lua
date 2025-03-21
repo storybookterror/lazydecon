@@ -10,7 +10,7 @@ local LZD = {
 
     defaults = {
         general = {
-            spam = true,
+            spam = false,
         },
         glyphs = {
             when = LZD_ALWAYS,
