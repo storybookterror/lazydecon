@@ -26,6 +26,7 @@ local LZD = {
             trashMinQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             trashMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
             researchable = false,
+            exemplary = false,
             intricates = LZD_LEVELLING,
             ornates = false,
             sets = false,
@@ -85,6 +86,7 @@ local LZD = {
             trashMinQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             trashMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
             researchable = false,
+            exemplary = false,
             intricates = LZD_LEVELLING,
             ornates = false,
             sets = false,
@@ -302,6 +304,7 @@ local function LZD_CreateSettingsPanel()
         qualityMenu("Basic Items: Minimum Quality", "equip", "trashMinQuality"),
         qualityMenu("Basic Items: Maximum Quality", "equip", "trashMaxQuality"),
         checkbox("Include Researchable Items", "equip", "researchable", nil),
+        checkbox("Include Exemplary Items", "equip", "exemplary", nil),
         whenToDeconMenu("Include Intricates", "equip", "intricates"),
         checkbox("Include Ornates", "equip", "ornates", nil),
         checkbox("Include Easily Reconstructed Sets", "equip", "sets",
@@ -342,6 +345,7 @@ local function LZD_CreateSettingsPanel()
         qualityMenu("Basic Jewelry: Minimum Quality", "jewelry", "trashMinQuality"),
         qualityMenu("Basic Jewelry: Maximum Quality", "jewelry", "trashMaxQuality"),
         checkbox("Include Researchable Items", "jewelry", "researchable", nil),
+        checkbox("Include Exemplary Items", "jewelry", "exemplary", nil),
         whenToDeconMenu("Include Intricates", "jewelry", "intricates"),
         checkbox("Include Ornates", "jewelry", "ornates", nil),
         checkbox("Include Easily Reconstructed Sets", "jewelry", "sets",
@@ -384,13 +388,20 @@ local function LZD_SaveForCrows(link)
     return GetItemLinkArmorType(link) ~= ARMORTYPE_NONE and HasQuest(6024)
 end
 
+local function LZD_IsExemplary(bagId, slotIndex, link)
+    local tradeskill = GetItemLinkCraftingSkillType(link)
+    local quality = GetItemLinkQuality(link)
+    return quality < ITEM_FUNCTIONAL_QUALITY_LEGENDARY and
+           not CanItemBeSmithingImproved(bagId, slotIndex, tradeskill)
+end
+
 local function LZD_ShouldDeconCraft(tristate, tradeskill)
     return tristate == LZD_ALWAYS or
            (tristate == LZD_LEVELLING and
             not LZD_IsTradeSkillFullyLevelled(tradeskill))
 end
 
-local function LZD_ShouldDeconEquipment(link, category)
+local function LZD_ShouldDeconEquipment(bagId, slotIndex, link, category)
     local isSet, setName, _, _, _, setId = GetItemLinkSetInfo(link, false)
     local researchable = CanItemLinkBeTraitResearched(link)
     local quality = GetItemLinkQuality(link)
@@ -431,6 +442,10 @@ local function LZD_ShouldDeconEquipment(link, category)
     end
 
     if researchable and not LZD.vars[category].researchable then
+        return false
+    end
+
+    if LZD_IsExemplary(bagId, slotIndex, link) and not LZD.vars[category].exemplary then
         return false
     end
 
@@ -530,9 +545,9 @@ local function LZD_ShouldDecon(bagId, slotIndex)
     local equipType = GetItemLinkEquipType(link)
 
     if equipType == EQUIP_TYPE_RING or equipType == EQUIP_TYPE_NECK then
-        return LZD_ShouldDeconEquipment(link, "jewelry")
+        return LZD_ShouldDeconEquipment(bagId, slotIndex, link, "jewelry")
     elseif equipType ~= EQUIP_TYPE_INVALID then
-        return LZD_ShouldDeconEquipment(link, "equip")
+        return LZD_ShouldDeconEquipment(bagId, slotIndex, link, "equip")
     elseif LZD_IsGlyph(link) then
         return LZD_ShouldDeconGlyphs(bagId, slotIndex, link)
     end
