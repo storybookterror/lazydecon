@@ -7,7 +7,7 @@ LZD_SMART     = 3
 
 local LZD = {
     name = "LazyDecon",
-    version = "0.4",
+    version = "0.4.90",
 
     researchSaved = {},
 
