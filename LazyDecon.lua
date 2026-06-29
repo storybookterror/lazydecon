@@ -3,14 +3,18 @@ local LAM2 = LibAddonMenu2
 LZD_ALWAYS    = 1
 LZD_NEVER     = 2
 LZD_LEVELLING = 3
+LZD_SMART     = 3
 
 local LZD = {
     name = "LazyDecon",
     version = "0.4",
 
+    researchSaved = {},
+
     defaults = {
         general = {
             spam = false,
+            researchable = LZD_SMART,
         },
         glyphs = {
             when = LZD_ALWAYS,
@@ -25,7 +29,6 @@ local LZD = {
             price = 1000,
             trashMinQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             trashMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
-            researchable = false,
             exemplary = false,
             intricates = LZD_LEVELLING,
             ornates = false,
@@ -85,7 +88,6 @@ local LZD = {
             price = 2500,
             trashMinQuality = ITEM_FUNCTIONAL_QUALITY_NORMAL,
             trashMaxQuality = ITEM_FUNCTIONAL_QUALITY_ARTIFACT,
-            researchable = false,
             exemplary = false,
             intricates = LZD_LEVELLING,
             ornates = false,
@@ -201,6 +203,16 @@ local function LZD_CreateSettingsPanel()
                         "Intricates used when levelling ignore this setting.")
     end
 
+    local function researchMenu()
+        local choices = {
+            [LZD_ALWAYS] = GetString(SI_YES),
+            [LZD_NEVER]  = GetString(SI_NO),
+            [LZD_LEVELLING] = "Smart",
+        }
+        return dropdown("Include Researchable Items", choices, "general", "researchable", 0,
+                        "'Smart' retains only as many items as you can simultaneously research.  Prefers saving lower quality, non-set, more useful trait, less expensive items.")
+    end
+
     local function checkbox(name, category, option, tooltip)
         return {
             type = "checkbox",
@@ -283,6 +295,7 @@ local function LZD_CreateSettingsPanel()
     local options = {
         checkbox("Print selected items to Chat", "general", "spam",
                  "Print \"LazyDecon added [Item]\" in chatbox for each selected item so you can sanity check it.  (Currently may double post, this is a known issue.)"),
+        researchMenu(),
         {
             type = "header",
             name = "Glyphs",
@@ -303,7 +316,6 @@ local function LZD_CreateSettingsPanel()
         priceMenu("equip"),
         qualityMenu("Basic Items: Minimum Quality", "equip", "trashMinQuality"),
         qualityMenu("Basic Items: Maximum Quality", "equip", "trashMaxQuality"),
-        checkbox("Include Researchable Items", "equip", "researchable", nil),
         checkbox("Include Exemplary Items", "equip", "exemplary", nil),
         whenToDeconMenu("Include Intricates", "equip", "intricates"),
         checkbox("Include Ornates", "equip", "ornates", nil),
@@ -344,7 +356,6 @@ local function LZD_CreateSettingsPanel()
         priceMenu("jewelry"),
         qualityMenu("Basic Jewelry: Minimum Quality", "jewelry", "trashMinQuality"),
         qualityMenu("Basic Jewelry: Maximum Quality", "jewelry", "trashMaxQuality"),
-        checkbox("Include Researchable Items", "jewelry", "researchable", nil),
         checkbox("Include Exemplary Items", "jewelry", "exemplary", nil),
         whenToDeconMenu("Include Intricates", "jewelry", "intricates"),
         checkbox("Include Ornates", "jewelry", "ornates", nil),
@@ -377,6 +388,16 @@ local function LZD_CreateSettingsPanel()
 
     LAM2:RegisterOptionControls(LZD.name, options)
 end
+
+-----------------------------------------------------------------------------
+-- Utility Functions
+-----------------------------------------------------------------------------
+
+-- Make an Item object for easier storing/passing
+local function LZD_Item(bagId, slotIndex, link)
+    return {["bag"] = bagId, ["slot"] = slotIndex, ["link"] = link}
+end
+
 
 -----------------------------------------------------------------------------
 -- What to Deconstruct
@@ -441,7 +462,7 @@ local function LZD_ShouldDeconEquipment(bagId, slotIndex, link, category)
        return false
     end
 
-    if researchable and not LZD.vars[category].researchable then
+    if researchable and LZD.vars.general.researchable == LZD_NEVER then
         return false
     end
 
@@ -554,16 +575,104 @@ local function LZD_ShouldDecon(bagId, slotIndex)
 end
 
 -----------------------------------------------------------------------------
+-- Research limit helpers
+-----------------------------------------------------------------------------
+local function LZD_ResetResearch()
+    LZD.researchSaved[CRAFTING_TYPE_BLACKSMITHING] = {}
+    LZD.researchSaved[CRAFTING_TYPE_CLOTHIER] = {}
+    LZD.researchSaved[CRAFTING_TYPE_WOODWORKING] = {}
+    LZD.researchSaved[CRAFTING_TYPE_ENCHANTING] = {}
+    LZD.researchSaved[CRAFTING_TYPE_JEWELRYCRAFTING] = {}
+end
+
+-- Assign a score for how desirable an item is to deconstruct vs. keep
+-- Higher values = better to decon / Lower values = better to research
+local function LZD_ResearchScore(item)
+    local link = item["link"]
+
+    -- Prefer to deconstruct higher quality items and research lower ones
+    local score = GetItemLinkQuality(link) * 1000000
+
+    -- Prefer to deconstruct non-set items and save set ones
+    if not GetItemLinkSetInfo(link, false) then
+        score = score + 100000
+    end
+
+    -- Prefer to deconstruct invigorating (greatly), non-divines (slightly)
+    local trait = GetItemLinkTraitType(link)
+    if trait == ITEM_TRAIT_TYPE_ARMOR_PROSPEROUS then
+        score = score + 90000
+    elseif trait ~= ITEM_TRAIT_TYPE_ARMOR_DIVINES then
+        score = score + 10000
+    end
+
+    -- Prefer to deconstruct lower value items
+    local price = LibPrice.ItemLinkToPriceGold(link)
+    score = score + math.min(9999 - price, 0)
+
+    return score
+end
+
+local function LZD_AddItem(item)
+    LZD.station:AddItemToCraft(item["bag"], item["slot"])
+    if LZD.vars.general.spam then
+        d("LazyDecon added " .. item["link"])
+    end
+end
+
+-- Return true if item should be deconstructed
+local function LZD_ShouldDeconResearchable(item)
+    local craft = GetItemLinkCraftingSkillType(item["link"])
+    local max = GetMaxSimultaneousSmithingResearch(craft)
+
+    -- HACK: Ignore if item is already in the list (because our hook gets
+    --       called twice for every item for some reason)
+    for i, other in ipairs(LZD.researchSaved[craft]) do
+        if item["bag"] == other["bag"] and item["slot"] == other["slot"] then
+            return false
+        end
+    end
+
+    --d(zo_strformat("Considering <<1>> item: <<2>>", GetString("SI_TRADESKILLTYPE", craft), item["link"]))
+
+    local count = #LZD.researchSaved[craft]
+    if count < max then
+        -- We are still saving items for research.  Keep this one for now.
+        --d(zo_strformat("Appending <<1>> item #<<2>>: <<3>>", GetString("SI_TRADESKILLTYPE", craft), count + 1, item["link"]))
+        LZD.researchSaved[craft][count + 1] = item
+        return false
+    else
+        -- Compare against the list of things currently saved for research
+        score = LZD_ResearchScore(item)
+        for i, other in ipairs(LZD.researchSaved[craft]) do
+            --d(zo_strformat("<<1>> score <<2>> vs. <<3>> score <<4>>", item["link"], score, other["link"], LZD_ResearchScore(other)))
+            -- If 'other' is more valuable to deconstruct...then add it
+            -- instead and save this one.
+            if LZD_ResearchScore(other) > score then
+                --d(zo_strformat("Deconstructing <<1>> item #<<2>> <<3>> instead of <<4>>", GetString("SI_TRADESKILLTYPE", craft), i, other["link"], item["link"]))
+                LZD_AddItem(other)
+                LZD.researchSaved[craft][i] = item
+                return false
+            end
+        end
+    end
+    --d(zo_strformat("Deconstructing <<1>> item <<2>>", GetString("SI_TRADESKILLTYPE", craft), item["link"]))
+    return true
+end
+
+-----------------------------------------------------------------------------
 -- Deconstruction Panel Hooks
 -----------------------------------------------------------------------------
 local function LZD_SelectItem(self, bagId, slotIndex, ...)
     local name = GetItemName(bagId, slotIndex)
     local link = GetItemLink(bagId, slotIndex, LINK_STYLE_BRACKETS)
-    if LZD_ShouldDecon(bagId, slotIndex) then
-        LZD.station:AddItemToCraft(bagId, slotIndex)
-        if LZD.vars.general.spam then
-            d("LazyDecon added " .. link)
-        end
+    local item = LZD_Item(bagId, slotIndex, link)
+    if LZD_ShouldDecon(bagId, slotIndex) and
+       (LZD.vars.general.researchable ~= LZD_SMART or
+        not CanItemLinkBeTraitResearched(link) or
+        LZD_ShouldDeconResearchable(item)) then
+
+        LZD_AddItem(item)
 
         -- Adding multiple items would trigger the "select an item" sound
         -- multiple times.  Disable the sound temporarily (after the first
@@ -594,6 +703,8 @@ local function LZD_SwitchDeconScreen(eventCode, craftingType, sameStation, craft
     else
         LZD.station = SMITHING
     end
+
+    LZD_ResetResearch()
 end
 
 -----------------------------------------------------------------------------
@@ -607,6 +718,9 @@ end
 
 local function LZD_Initialize()
     LZD.vars = ZO_SavedVars:NewAccountWide("LazyDeconVars", 2, GetWorldName(), LZD.defaults)
+
+    LZD.vars.equip.researchable = nil
+    LZD.vars.jewelry.researchable = nil
 
     LZD.savedSmithingSound = SOUNDS.SMITHING_ITEM_TO_EXTRACT_PLACED
     LZD.savedArmorGlyphSound = SOUNDS.ENCHANTING_ARMOR_GLYPH_PLACED
