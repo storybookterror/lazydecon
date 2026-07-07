@@ -707,6 +707,17 @@ local function LZD_SwitchDeconScreen(eventCode, craftingType, sameStation, craft
     LZD_ResetResearch()
 end
 
+------------------------------------------------------------------------------
+-- Basic Slash Commands
+------------------------------------------------------------------------------
+local function SlashBT(text)
+    for _, item in pairs(SHARED_INVENTORY:GetOrCreateBagCache(BAG_BACKPACK)) do
+        if IsItemBoPAndTradeable(item.bagId, item.slotIndex) then
+            BindItem(item.bagId, item.slotIndex)
+        end
+    end
+end
+
 -----------------------------------------------------------------------------
 -- Add-on initialization
 -----------------------------------------------------------------------------
@@ -731,6 +742,8 @@ local function LZD_Initialize()
     LZD_RegisterHooks(ENCHANTING.inventory)
     EVENT_MANAGER:RegisterForEvent(LZD.name, EVENT_CRAFTING_STATION_INTERACT, LZD_SwitchDeconScreen)
     LZD_CreateSettingsPanel()
+
+    SLASH_COMMANDS["/bt"] = SlashBT
 end
 
 -----------------------------------------------------------------------------
