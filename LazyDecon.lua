@@ -607,8 +607,10 @@ local function LZD_ResearchScore(item)
     end
 
     -- Prefer to deconstruct lower value items
-    local price = LibPrice.ItemLinkToPriceGold(link)
-    score = score + math.min(9999 - price, 0)
+    if LibPrice then
+        local price = LibPrice.ItemLinkToPriceGold(link)
+        score = score + math.min(9999 - price, 0)
+    end
 
     return score
 end
